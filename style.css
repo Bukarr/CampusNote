@@ -1,0 +1,69 @@
+body {
+  overflow-x: hidden;
+}
+
+#wrapper {
+  display: flex;
+  position: relative;
+}
+
+/* Sidebar hidden by default */
+#sidebar-wrapper {
+  position: fixed;
+  top: 66px;
+  left: -250px;
+  width: 250px;
+  height: calc(100vh - 66px);
+  background-color: #1e1e1e;
+  transition: left 0.3s ease;
+  z-index: 1050;
+}
+
+/* Sidebar visible when wrapper has .toggled */
+#wrapper.toggled #sidebar-wrapper {
+  left: 0;
+}
+
+#page-content-wrapper {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 20px;
+}
+
+/* Align text for buttons in list-group */
+.list-group-item-action {
+  text-align: left;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #f1f1f1;
+}
+
+body.dark-mode .bg-light {
+  background-color: #1e1e1e !important;
+}
+
+body.dark-mode .form-control {
+  background-color: #2a2a2a;
+  color: #f1f1f1;
+  border-color: #444;
+}
+
+body.dark-mode .form-control::placeholder {
+  color: #888;
+}
+
+body.dark-mode .card {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .navbar,
+body.dark-mode #sidebar-wrapper,
+body.dark-mode .list-group-item {
+  background-color: #1e1e1e !important;
+  color: #f1f1f1 !important;
+}

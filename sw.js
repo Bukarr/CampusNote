@@ -1,20 +1,21 @@
-// Name of the cache
-const CACHE_NAME = "CampusNote-C1";
-
-// Files to cache
+const CACHE_NAME = 'CampusNote-cache-v1';
 const urlsToCache = [
-  "/",
-  "/index.html",
-  "/CampusNote.html",
-  "/manifest.json",
-  "/sw.js",
-  "/icons/campusnote-icon.png",
-  "/icons/campusnote-icon.png",
-  "/styles.css",
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/crypto-js.min.js',
+  '/sw.js',
+  '/login.html',
+  '/CampusNote.html',
+  '/style.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
+  'https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js',
+  'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
-// Install service worker
-self.addEventListener("install", event => {
+// Install event: cache essential files
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
@@ -22,32 +23,23 @@ self.addEventListener("install", event => {
   );
 });
 
-// Activate service worker
-self.addEventListener("activate", event => {
+// Activate event: clean up old caches
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      )
+    )
   );
 });
 
-// Fetch files
-self.addEventListener("fetch", event => {
+// Fetch event: serve cached files when offline
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
+    caches.match(event.request).then(response =>
+      response || fetch(event.request)
+    )
   );
 });
-// Listen for messages from the main thread
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-}); 
+

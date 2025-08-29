@@ -1,63 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sidebar Toggle Demo</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-<link rel="manifest" href="/manifest.json" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CampusNote 📘</title>
+
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Quill (Rich Text) -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+
   <style>
-    #wrapper {
-      display: flex;
-      position: relative;
-    }
-    #scanImageInput{
-      width: 70vw;
-      border: 1px solid #929292;
-      border-radius: 5px;
-      padding: 5px;
-    }
+    #wrapper { display:flex; position:relative; }
+    #scanImageInput{ width:70vw; border:1px solid #929292; border-radius:5px; padding:5px; }
 
     /* Sidebar hidden by default */
     #sidebar-wrapper {
-      position: fixed;
-      top: 70px;
-      left: -250px;
-      width: 250px;
-      height: calc(100vh - 66px);
-      background-color: #34495e;
-      transition: left 0.3s ease;
-      z-index: 1050;
+      position:fixed; top:70px; left:-250px; width:250px; height:calc(100vh - 66px);
+      background-color:#34495e; transition:left .3s ease; z-index:1050;
     }
-
     /* Sidebar visible when toggled */
-    #wrapper.toggled #sidebar-wrapper {
-      left: 0;
-    }
-    .content-section {
-  display: none;
-}
-.content-section.active {
-  display: block;
-}
-#topNav {
-  background-color: #34495e;
-}
-.list-group-item{
-    background-color: #34495e;
-    border: none;
-}
-.list-group-item:hover {
-    background-color: #2c3e50;
-    color: white;
-    cursor: pointer;
-}
-#menu-toggle{
-    background-color: #34495e;
-    border: none;
-    color: white;
-}
+    #wrapper.toggled #sidebar-wrapper { left:0; }
+
+    .content-section{ display:none; }
+    .content-section.active{ display:block; }
+    #topNav{ background-color:#34495e; }
+    .list-group-item{ background-color:#34495e; border:none; }
+    .list-group-item:hover{ background-color:#2c3e50; color:#fff; cursor:pointer; }
+    #menu-toggle{ background-color:#34495e; border:none; color:#fff; }
+
+    #editor { height:320px; background:#fff; }
+    .ql-toolbar.ql-snow { border-radius:.5rem .5rem 0 0; }
+    .ql-container.ql-snow { border-radius:0 0 .5rem .5rem; }
   </style>
 </head>
 <body class="bg-light">
@@ -68,97 +45,134 @@
       <button class="btn btn-dark" type="button" id="menu-toggle">
         <i class="bi bi-list fs-4"></i>
       </button>
-      <a class="navbar-brand mx-auto text-white" href="CampusNote.html"> CampusNote 📘 </a>
+      <a class="navbar-brand mx-auto text-white" href="#">CampusNote 📘</a>
     </div>
   </nav>
 
   <!-- Wrapper -->
   <div class="d-flex" id="wrapper">
     <!-- Sidebar -->
-    <div class="" id="sidebar-wrapper">
+    <div id="sidebar-wrapper">
       <div class="list-group list-group-flush">
-        <button class="list-group-item list-group-item-action  text-white" data-section="new-note-section">📝 New Note</button>
-        <button class="list-group-item list-group-item-action  text-white" data-section="notes-section">📒 Notes</button>
-        <button class="list-group-item list-group-item-action  text-white" data-section="export-section">📤 Export</button>
-        <button class="list-group-item list-group-item-action  text-white" data-section="import-section">📥 Import</button>
-        <button class="list-group-item list-group-item-action  text-white" id="toggle-theme-btn">🌙 Toggle Theme</button>
+        <button class="list-group-item list-group-item-action text-white" data-section="new-note-section">📝 New Note</button>
+        <button class="list-group-item list-group-item-action text-white" data-section="notes-section">📒 Notes</button>
+        <button class="list-group-item list-group-item-action text-white" data-section="export-section">📤 Export</button>
+        <button class="list-group-item list-group-item-action text-white" data-section="import-section">📥 Import</button>
+        <button class="list-group-item list-group-item-action text-white" id="toggle-theme-btn">🌙 Toggle Theme</button>
       </div>
     </div>
   </div>
 
+  <!-- Page content -->
   <div id="page-content-wrapper" class="flex-grow-1">
-      <div class="container-fluid py-4">
-        <div id="main-content">
-          <!-- New Note Section -->
-          <div id="new-note-section" class="content-section active">
-            <h4>Create a New Note</h4>
-            <div class="mb-3">
-              <select id="folderSelect" class="form-select">
-                <option value="">All Folders</option>
-              </select>
-              <div class="input-group mt-2">
-                <input type="text" id="newFolderInput" class="form-control" placeholder="Create new folder" />
-                <button class="btn btn-outline-primary" onclick="createFolderBtn()">Add Folder</button>
-              </div>
-            </div>
-            <div class="mb-3">
-              <textarea id="noteInput" class="form-control" rows="10" placeholder="Write your masterpiece..."></textarea>
-              <input type="text" id="tagInput" class="form-control mt-2" placeholder="Tags (comma separated)" />
-              <input type="date" id="dateInput" class="form-control mt-2" />
-            </div>
-            <div class="d-flex gap-2 flex-wrap justify-content-center align-items-center">
-              <button class="btn btn-success" onclick="saveNote()"><i class="bi bi-save"></i> Save</button>
-              <button class="btn btn-primary text-white" onclick="startVoiceNote()"><i class="bi bi-mic-fill"></i> Voice</button>
-              <input type="file" id="scanImageInput" accept="image/*">
-              <button class="btn btn-warning" onclick="scanImageToText('scanImageInput')"><i class="bi bi-image"></i> Scan</button>
-            </div>
-          </div>
-
-          <!-- Notes Section -->
-          <div id="notes-section" class="content-section">
-            <h4>My Notes</h4>
-            <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search notes..." oninput="searchNotes()" />
-            <div id="notesContainer"></div>
-          </div>
-
-          <!-- Export Section -->
-          <div id="export-section" class="content-section">
-            <h4>Export Notes</h4>
-            <div id="exportList" class="mb-3"></div>
-            <select id="exportFormat" class="form-select mb-2">
-              <option value="txt">TXT</option>
-              <option value="pdf">PDF</option>
-              <option value="docx">DOCX</option>
+    <div class="container-fluid py-4">
+      <div id="main-content">
+        <!-- New Note Section -->
+        <div id="new-note-section" class="content-section active">
+          <h4>Create a New Note</h4>
+          <div class="mb-3">
+            <select id="folderSelect" class="form-select">
+              <option value="">All Folders</option>
             </select>
-            <button class="btn btn-success" onclick="exportSelected()">Export Selected</button>
+            <div class="input-group mt-2">
+              <input type="text" id="newFolderInput" class="form-control" placeholder="Create new folder" />
+              <button class="btn btn-outline-primary" onclick="createFolderBtn()">Add Folder</button>
+            </div>
           </div>
 
-          <!-- Import Section -->
-          <div id="import-section" class="content-section">
-            <h4>Import Notes</h4>
-            <div id="importList" class="mb-3"></div>
-            <input type="file" id="importInput" class="form-control mb-2" accept=".txt,.docx,.pdf" onchange="handleImport(this)" />
+          <div class="mb-3">
+            <!-- Rich text editor -->
+            <div id="editor"></div>
+            <input type="text" id="tagInput" class="form-control mt-2" placeholder="Tags (comma separated)" />
+            <input type="date" id="dateInput" class="form-control mt-2" />
           </div>
+
+          <div class="d-flex gap-2 flex-wrap justify-content-center align-items-center">
+            <button class="btn btn-success" onclick="saveNote()"><i class="bi bi-save"></i> Save</button>
+            <button class="btn btn-primary text-white" onclick="startVoiceNote()"><i class="bi bi-mic-fill"></i> Voice</button>
+            <input type="file" id="scanImageInput" accept="image/*">
+            <button class="btn btn-warning" onclick="scanImageToText('scanImageInput')"><i class="bi bi-image"></i> Scan</button>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div id="notes-section" class="content-section">
+          <h4>My Notes</h4>
+          <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search notes..." oninput="searchNotes()" />
+          <div id="notesContainer"></div>
+        </div>
+
+        <!-- Export Section -->
+        <div id="export-section" class="content-section">
+          <h4>Export Notes</h4>
+          <div id="exportList" class="mb-3"></div>
+
+          <input id="filenameInput" class="form-control mb-2" placeholder="File name (without extension)" />
+
+          <select id="exportFormat" class="form-select mb-2">
+            <option value="txt">TXT</option>
+            <option value="pdf">PDF</option>
+            <option value="docx">DOCX</option>
+          </select>
+          <button class="btn btn-success" onclick="exportSelected()">Export Selected</button>
+        </div>
+
+        <!-- Import Section -->
+        <div id="import-section" class="content-section">
+          <h4>Import Notes</h4>
+          <p class="text-muted small">Supported: .html (best), .docx (keeps most formatting), .pdf (text only), .txt</p>
+          <div id="importList" class="mb-3"></div>
+          <input type="file" id="importInput" class="form-control mb-2"
+                 accept=".txt,.docx,.pdf,.html,.htm" onchange="handleImport(this)" />
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Vendor scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- jsPDF + html2canvas for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- DOCX (generate) -->
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.2.4/build/index.js"></script>
+  <!-- HTML -> DOCX (preserve formatting) -->
+  <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
+
+  <!-- Quill -->
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.min.js"></script>
+
+  <!-- DOCX (read) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+  <!-- PDF.js (read) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
   <script>
+    /* ---------------------------
+       Sidebar Toggle & Navigation (RESTORED)
+    ---------------------------- */
     const wrapper = document.getElementById('wrapper');
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar-wrapper');
 
     // Toggle sidebar on menu button click
     menuToggle.addEventListener('click', (e) => {
-      e.stopPropagation(); // prevent click bubbling
+      e.stopPropagation();
       wrapper.classList.toggle('toggled');
     });
 
-    // Hide sidebar when clicking on a sidebar button
+    // Hide sidebar when clicking on a sidebar button + section switch
     document.querySelectorAll('[data-section]').forEach(btn => {
       btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-section');
+        document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
         wrapper.classList.remove('toggled');
+        if (target === 'export-section') renderExportList();
+        if (target === 'import-section') renderImportList();
       });
     });
 
@@ -171,362 +185,352 @@
       }
     });
   </script>
- <!-- Add these scripts to your <head> or before </body> -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.2/tesseract.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx@8.2.4/build/index.js"></script>
 
-<script>
-/* ---------------------------
-   Global Data & State
----------------------------- */
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
-let folders = JSON.parse(localStorage.getItem("folders")) || ["General"];
-let editingNoteId = null;
+  <script>
+    /* ---------------------------
+       Quill Editor (Rich Text)
+    ---------------------------- */
+    const quill = new Quill('#editor', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ indent: '-1' }, { indent: '+1' }],
+          ['blockquote', 'code-block'],
+          ['link']
+        ]
+      }
+    });
 
-/* ---------------------------
-   Navigation Handling
----------------------------- */
-document.querySelectorAll("[data-section]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    let target = btn.getAttribute("data-section");
-    document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
-    document.getElementById(target).classList.add("active");
+    /* ---------------------------
+       Global Data & State
+    ---------------------------- */
+    let notes = JSON.parse(localStorage.getItem("notes")) || [];
+    let folders = JSON.parse(localStorage.getItem("folders")) || ["General"];
+    let editingNoteId = null;
 
-    if (target === "export-section") renderExportList();
-    if (target === "import-section") renderImportList();
-  });
-});
+    /* ---------------------------
+       Helpers
+    ---------------------------- */
+    const stripHTML = (html) => (new DOMParser().parseFromString(html, 'text/html').body.textContent || "");
 
-/* ---------------------------
-   Folder Management
----------------------------- */
-function renderFolders() {
-  let folderSelect = document.getElementById("folderSelect");
-  folderSelect.innerHTML = `<option value="">All Folders</option>`;
-  folders.forEach(f => {
-    let opt = document.createElement("option");
-    opt.value = f;
-    opt.textContent = f;
-    folderSelect.appendChild(opt);
-  });
-}
-function createFolderBtn() {
-  let input = document.getElementById("newFolderInput");
-  let val = input.value.trim();
-  if (val && !folders.includes(val)) {
-    folders.push(val);
-    localStorage.setItem("folders", JSON.stringify(folders));
-    renderFolders();
-    input.value = "";
-  }
-}
-renderFolders();
-
-/* ---------------------------
-   Save Note (New or Edit)
----------------------------- */
-function saveNote() {
-  let folder = document.getElementById("folderSelect").value || "General";
-  let text = document.getElementById("noteInput").value.trim();
-  let tags = document.getElementById("tagInput").value.split(",").map(t => t.trim()).filter(Boolean);
-  let date = document.getElementById("dateInput").value || new Date().toISOString().split("T")[0];
-
-  if (!text) return alert("Please write something before saving.");
-
-  if (editingNoteId) {
-    // Update existing note
-    notes = notes.map(n => n.id === editingNoteId ? {...n, text, tags, folder, date} : n);
-    editingNoteId = null;
-    alert("Note updated!");
-  } else {
-    // Create new note
-    let note = { id: Date.now(), folder, text, tags, date };
-    notes.push(note);
-    alert("Note saved!");
-  }
-
-  localStorage.setItem("notes", JSON.stringify(notes));
-  renderNotes();
-  renderExportList();
-  document.getElementById("noteInput").value = "";
-  document.getElementById("tagInput").value = "";
-}
-
-/* ---------------------------
-   Render Notes
----------------------------- */
-function renderNotes(filter = "") {
-  let container = document.getElementById("notesContainer");
-  container.innerHTML = "";
-  let filtered = notes.filter(n => 
-    n.text.toLowerCase().includes(filter.toLowerCase()) || 
-    (n.tags && n.tags.join(",").toLowerCase().includes(filter.toLowerCase()))
-  );
-  filtered.forEach(n => {
-    let card = document.createElement("div");
-    card.className = "card mb-2";
-    card.innerHTML = `
-      <div class="card-body">
-        <h6 class="card-subtitle mb-1"><b>${n.folder}</b> | ${n.date}</h6>
-        <p class="card-text">${n.text}</p>
-        <small class="text-muted">Tags: ${n.tags.join(", ")}</small>
-        <div class="mt-2">
-          <button class="btn btn-sm btn-primary" onclick="editNote(${n.id})">Edit</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteNote(${n.id})">Delete</button>
+    function buildExportHTML(selectedNotes){
+      return selectedNotes.map(n => `
+        <div class="note-export">
+          <h3>📌 ${n.folder} <small>(${n.date})</small></h3>
+          ${n.text}
+          ${n.tags?.length ? `<p><em>Tags: ${n.tags.join(", ")}</em></p>` : ""}
+          <hr/>
         </div>
-      </div>`;
-    container.appendChild(card);
-  });
-}
-function searchNotes() {
-  let query = document.getElementById("searchInput").value;
-  renderNotes(query);
-}
-function deleteNote(id) {
-  if (confirm("Are you sure you want to delete this note?")) {
-    notes = notes.filter(n => n.id !== id);
-    localStorage.setItem("notes", JSON.stringify(notes));
-    renderNotes();
-    renderExportList();
-  }
-}
-function editNote(id) {
-  let note = notes.find(n => n.id === id);
-  if (!note) return;
-  editingNoteId = id;
-  document.getElementById("noteInput").value = note.text;
-  document.getElementById("tagInput").value = note.tags.join(", ");
-  document.getElementById("folderSelect").value = note.folder;
-  document.getElementById("dateInput").value = note.date;
-  // Jump to new note section
-  document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
-  document.getElementById("new-note-section").classList.add("active");
-}
-renderNotes();
-
-/* ---------------------------
-   Export Notes
----------------------------- */
-function renderExportList() {
-  let exportList = document.getElementById("exportList");
-  exportList.innerHTML = notes.map(n => `
-    <div>
-      <input type="checkbox" value="${n.id}" class="export-check"/> 
-      <b>${n.folder}</b> (${n.date}) - ${n.text.substring(0,40)}...
-    </div>
-  `).join("");
-}
-/* ---------------------------
-   Export Notes (with formatted PDF)
----------------------------- */
-function exportSelected() {
-  let ids = Array.from(document.querySelectorAll(".export-check:checked")).map(c => +c.value);
-  let selectedNotes = notes.filter(n => ids.includes(n.id));
-  if (!selectedNotes.length) return alert("Select at least one note.");
-
-  let format = document.getElementById("exportFormat").value;
-
-  if (format === "txt") {
-    let content = selectedNotes.map(n =>
-      `📌 ${n.folder} (${n.date})\n${n.text}\nTags: ${n.tags.join(", ")}`
-    ).join("\n\n-----------------------------\n\n");
-    let blob = new Blob([content], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, "notes.txt");
-  }
-
-  if (format === "pdf") {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    // Page & text settings
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-    const margin = 20;  // uniform margin (left, right, top, bottom)
-    const lineHeight = 7;
-    const titleFontSize = 20;
-    const noteHeadingFontSize = 14;
-    const bodyFontSize = 12;
-    const footerFontSize = 10;
-    const usableWidth = pageWidth - margin * 2;
-    const maxLinesPerPage = Math.floor((pageHeight - margin * 2 - 30) / lineHeight);
-
-    let lineCount = 0;
-    let pageNumber = 1;
-
-    // Apply font globally
-    doc.setFont("helvetica", "normal");
-
-    // Add footer
-    function addFooter() {
-      doc.setFontSize(footerFontSize);
-      doc.text(`Page ${pageNumber}`, pageWidth / 2, pageHeight - 10, { align: "center" });
+      `).join("");
     }
 
-    // Add page title
-    function addTitle() {
-      doc.setFontSize(titleFontSize);
-      doc.setFont("helvetica", "bold");
-      doc.text("Exported Notes", pageWidth / 2, margin, { align: "center" });
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(bodyFontSize);
+    /* ---------------------------
+       Navigation (section init)
+    ---------------------------- */
+    function renderImportList() {
+      const container = document.getElementById("importList");
+      container.innerHTML = notes
+        .filter(n => n.folder === "Imported")
+        .map(n => `<div><b>${n.date}</b> - ${stripHTML(n.text).substring(0,60)}...</div>`)
+        .join("");
     }
 
-    // First page title
-    addTitle();
-    let y = margin + 15;
+    /* ---------------------------
+       Folder Management
+    ---------------------------- */
+    function renderFolders() {
+      let folderSelect = document.getElementById("folderSelect");
+      folderSelect.innerHTML = `<option value="">All Folders</option>`;
+      folders.forEach(f => {
+        let opt = document.createElement("option");
+        opt.value = f;
+        opt.textContent = f;
+        folderSelect.appendChild(opt);
+      });
+    }
+    function createFolderBtn() {
+      let input = document.getElementById("newFolderInput");
+      let val = input.value.trim();
+      if (val && !folders.includes(val)) {
+        folders.push(val);
+        localStorage.setItem("folders", JSON.stringify(folders));
+        renderFolders();
+        input.value = "";
+      }
+    }
+    renderFolders();
 
-    // Loop notes
-    selectedNotes.forEach((n, idx) => {
-      // Add note heading
-      let heading = `📌 ${n.folder} (${n.date})`;
-      let headingLines = doc.splitTextToSize(heading, usableWidth);
+    /* ---------------------------
+       Save Note (New or Edit)
+    ---------------------------- */
+    function saveNote() {
+      let folder = document.getElementById("folderSelect").value || "General";
+      let html = quill.root.innerHTML.trim();
+      let tags = document.getElementById("tagInput").value.split(",").map(t => t.trim()).filter(Boolean);
+      let date = document.getElementById("dateInput").value || new Date().toISOString().split("T")[0];
 
-      // Page break if needed before heading
-      if (lineCount + headingLines.length >= maxLinesPerPage) {
-        addFooter();
-        doc.addPage();
-        pageNumber++;
-        addTitle();
-        y = margin + 15;
-        lineCount = 0;
+      if (!stripHTML(html)) return alert("Please write something before saving.");
+
+      if (editingNoteId) {
+        notes = notes.map(n => n.id === editingNoteId ? {...n, text: html, tags, folder, date} : n);
+        editingNoteId = null;
+        alert("Note updated!");
+      } else {
+        notes.push({ id: Date.now(), folder, text: html, tags, date });
+        alert("Note saved!");
       }
 
-      // Heading
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(noteHeadingFontSize);
-      headingLines.forEach(line => {
-        doc.text(line, margin, y);
-        y += lineHeight;
-        lineCount++;
+      localStorage.setItem("notes", JSON.stringify(notes));
+      renderNotes();
+      renderExportList();
+      quill.root.innerHTML = "";
+      document.getElementById("tagInput").value = "";
+    }
+
+    /* ---------------------------
+       Render Notes & Search
+    ---------------------------- */
+    function renderNotes(filter = "") {
+      let container = document.getElementById("notesContainer");
+      container.innerHTML = "";
+      let filtered = notes.filter(n =>
+        stripHTML(n.text).toLowerCase().includes(filter.toLowerCase()) ||
+        (n.tags && n.tags.join(",").toLowerCase().includes(filter.toLowerCase()))
+      );
+      filtered.forEach(n => {
+        let card = document.createElement("div");
+        card.className = "card mb-2";
+        card.innerHTML = `
+          <div class="card-body">
+            <h6 class="card-subtitle mb-1"><b>${n.folder}</b> | ${n.date}</h6>
+            <div class="card-text">${n.text}</div>
+            <small class="text-muted">Tags: ${n.tags.join(", ")}</small>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-primary" onclick="editNote(${n.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteNote(${n.id})">Delete</button>
+            </div>
+          </div>`;
+        container.appendChild(card);
       });
+    }
+    function searchNotes() {
+      let query = document.getElementById("searchInput").value;
+      renderNotes(query);
+    }
+    function deleteNote(id) {
+      if (!confirm("Delete this note?")) return;
+      notes = notes.filter(n => n.id !== id);
+      localStorage.setItem("notes", JSON.stringify(notes));
+      renderNotes();
+      renderExportList();
+    }
+    function editNote(id) {
+      let note = notes.find(n => n.id === id);
+      if (!note) return;
+      editingNoteId = id;
+      quill.root.innerHTML = note.text;
+      document.getElementById("tagInput").value = note.tags.join(", ");
+      document.getElementById("folderSelect").value = note.folder;
+      document.getElementById("dateInput").value = note.date;
 
-      // Note body
-      let body = `${n.text}\n\nTags: ${n.tags.join(", ")}`;
-      let bodyLines = doc.splitTextToSize(body, usableWidth);
+      // Jump to new note section
+      document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById("new-note-section").classList.add("active");
+    }
+    renderNotes();
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(bodyFontSize);
+    /* ---------------------------
+       Export Notes (formatted)
+    ---------------------------- */
+    function renderExportList() {
+      let exportList = document.getElementById("exportList");
+      exportList.innerHTML = notes.map(n => `
+        <div>
+          <input type="checkbox" value="${n.id}" class="export-check"/> 
+          <b>${n.folder}</b> (${n.date}) - ${stripHTML(n.text).substring(0,40)}...
+        </div>
+      `).join("");
+    }
+    renderExportList();
 
-      bodyLines.forEach(line => {
-        if (lineCount >= maxLinesPerPage) {
-          addFooter();
-          doc.addPage();
-          pageNumber++;
-          addTitle();
-          y = margin + 15;
-          lineCount = 0;
+    async function exportSelected() {
+      const ids = Array.from(document.querySelectorAll(".export-check:checked")).map(c => +c.value);
+      const selectedNotes = notes.filter(n => ids.includes(n.id));
+      if (!selectedNotes.length) return alert("Select at least one note.");
+
+      const format = document.getElementById("exportFormat").value;
+      const filenameRaw = (document.getElementById("filenameInput").value || "notes").trim();
+      const filename = filenameRaw || "notes";
+
+      if (format === "txt") {
+        const plain = stripHTML(buildExportHTML(selectedNotes));
+        saveAs(new Blob([plain], {type: "text/plain;charset=utf-8"}), filename + ".txt");
+      }
+
+      if (format === "pdf") {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        // Build printable HTML
+        const wrapper = document.createElement('div');
+        wrapper.style.padding = '20px';
+        wrapper.style.fontFamily = 'Helvetica, Arial, sans-serif';
+        wrapper.style.fontSize = '12pt';
+        wrapper.innerHTML = buildExportHTML(selectedNotes);
+
+        // Use doc.html for better formatting support
+        await doc.html(wrapper, {
+          x: 40, y: 40, width: 515, // ~ A4 inner width
+          autoPaging: 'text',
+          windowWidth: 1000
+        });
+        doc.save(filename + ".pdf");
+      }
+
+      if (format === "docx") {
+        // Convert our combined HTML to DOCX (preserves headings, bold, italics, lists, etc.)
+        const html = `
+          <!DOCTYPE html><html><head>
+            <meta charset="utf-8" />
+            <style>
+              body { font-family: Arial, Helvetica, sans-serif; }
+              h1,h2,h3 { margin: 0 0 8px 0; }
+              p { margin: 0 0 8px 0; }
+              .note-export { margin-bottom: 12px; }
+            </style>
+          </head><body>${buildExportHTML(selectedNotes)}</body></html>
+        `;
+        const blob = window.htmlDocx.asBlob(html);
+        saveAs(blob, filename + ".docx");
+      }
+    }
+
+    /* ---------------------------
+       Import Notes (auto-format)
+    ---------------------------- */
+    async function handleImport(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+
+      // .html / .htm → keep HTML
+      if (ext === 'html' || ext === 'htm') {
+        const text = await file.text();
+        quill.root.innerHTML = text;
+        document.getElementById("folderSelect").value = "Imported";
+        document.getElementById("dateInput").value = new Date().toISOString().split("T")[0];
+        // Jump to editor for review
+        document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById("new-note-section").classList.add("active");
+        return;
+      }
+
+      // .docx → Mammoth to HTML
+      if (ext === 'docx') {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await window.mammoth.convertToHtml({ arrayBuffer });
+        quill.root.innerHTML = result.value; // HTML string
+        document.getElementById("folderSelect").value = "Imported";
+        document.getElementById("dateInput").value = new Date().toISOString().split("T")[0];
+        document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById("new-note-section").classList.add("active");
+        return;
+      }
+
+      // .pdf → PDF.js extract text (formatting limited)
+      if (ext === 'pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+        const pdf = await loadingTask.promise;
+        let fullText = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const content = await page.getTextContent();
+          const strings = content.items.map(it => it.str);
+          fullText += strings.join(' ') + '\n\n';
         }
-        doc.text(line, margin, y);
-        y += lineHeight;
-        lineCount++;
-      });
+        // Basic paragraphization for readability
+        const html = fullText
+          .split(/\n\s*\n/).map(par => `<p>${par.trim()}</p>`).join('');
+        quill.root.innerHTML = html;
+        document.getElementById("folderSelect").value = "Imported";
+        document.getElementById("dateInput").value = new Date().toISOString().split("T")[0];
+        document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById("new-note-section").classList.add("active");
+        return;
+      }
 
-      // Extra spacing between notes
-      y += lineHeight;
-      lineCount++;
-    });
+      // .txt → convert lines to paragraphs
+      if (ext === 'txt') {
+        const text = await file.text();
+        const html = text
+          .split(/\n\s*\n/).map(par => `<p>${par.replace(/\n/g,' ').trim()}</p>`).join('');
+        quill.root.innerHTML = html;
+        document.getElementById("folderSelect").value = "Imported";
+        document.getElementById("dateInput").value = new Date().toISOString().split("T")[0];
+        document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById("new-note-section").classList.add("active");
+        return;
+      }
 
-    addFooter(); // last page footer
-    doc.save("notes.pdf");
-  }
+      alert("Unsupported file type.");
+    }
 
-  if (format === "docx") {
-    const docxDoc = new docx.Document({
-      sections: [{
-        properties: {},
-        children: selectedNotes.map(n =>
-          new docx.Paragraph({
-            text: `📌 ${n.folder} (${n.date})\n${n.text}\nTags: ${n.tags.join(", ")}`,
-            spacing: { after: 200 }
-          })
-        )
-      }]
-    });
-    docx.Packer.toBlob(docxDoc).then(blob => saveAs(blob, "notes.docx"));
-  }
-}
+    /* ---------------------------
+       Voice-to-Text
+    ---------------------------- */
+    function startVoiceNote() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("Speech Recognition is not supported in this browser.");
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
 
-/* ---------------------------
-   Import Notes
----------------------------- */
-function handleImport(input) {
-  let file = input.files[0];
-  if (!file) return;
-  let reader = new FileReader();
-  reader.onload = (e) => {
-    let text = e.target.result;
-    document.getElementById("noteInput").value = text;
-    document.getElementById("folderSelect").value = "Imported";
-    document.getElementById("dateInput").value = new Date().toISOString().split("T")[0];
-    // Jump to new note section for review
-    document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
-    document.getElementById("new-note-section").classList.add("active");
-  };
-  reader.readAsText(file);
-}
-function renderImportList() {
-  let container = document.getElementById("importList");
-  container.innerHTML = notes
-    .filter(n => n.folder === "Imported")
-    .map(n => `<div><b>${n.date}</b> - ${n.text.substring(0,40)}...</div>`)
-    .join("");
-}
-</script>
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        const end = quill.getLength();
+        quill.insertText(end, (quill.getText().trim() ? "\n" : "") + transcript);
+      };
+      recognition.onerror = function(event) {
+        alert("Voice recognition error: " + event.error);
+      };
+    }
 
-<script>
-/* ---------------------------
-   Voice-to-Text (VN Button)
----------------------------- */
-function startVoiceNote() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    alert("Speech Recognition is not supported in this browser.");
-    return;
-  }
+    /* ---------------------------
+       OCR (Image → Text)
+    ---------------------------- */
+    function scanImageToText(fileInputId) {
+      const fileInput = document.getElementById(fileInputId);
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select an image first.");
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.start();
-
-  recognition.onresult = function(event) {
-    const transcript = event.results[0][0].transcript;
-    let noteField = document.getElementById("noteInput");
-    noteField.value += (noteField.value ? "\n" : "") + transcript;
-  };
-
-  recognition.onerror = function(event) {
-    alert("Voice recognition error: " + event.error);
-  };
-}
-
-/* ---------------------------
-   Image-to-Text (Scan Button)
----------------------------- */
-function scanImageToText(fileInputId) {
-  let fileInput = document.getElementById(fileInputId);
-  let file = fileInput.files[0];
-  if (!file) {
-    alert("Please select an image first.");
-    return;
-  }
-
-  Tesseract.recognize(
-    file,
-    'eng',
-    { logger: m => console.log(m) }
-  ).then(({ data: { text } }) => {
-    let noteField = document.getElementById("noteInput");
-    noteField.value += (noteField.value ? "\n" : "") + text.trim();
-  }).catch(err => {
-    console.error(err);
-    alert("Error scanning image.");
-  });
-}
-</script>
+      Tesseract.recognize(file, 'eng', { logger: m => console.log(m) })
+        .then(({ data: { text } }) => {
+          const clean = text.trim();
+          if (!clean) return;
+          quill.clipboard.dangerouslyPasteHTML(quill.getLength(), `<p>${clean.replace(/\n/g,'<br/>')}</p>`);
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Error scanning image.");
+        });
+    }
+  </script>
+  <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 </body>
 </html>
+    

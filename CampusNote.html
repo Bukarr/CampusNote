@@ -14,39 +14,90 @@
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
 
   <style>
+    :root{
+      --nav-bg:#34495e;
+      --sidebar-bg:#34495e;
+      --sidebar-hover:#2c3e50;
+      --text:#212529;
+      --card-bg:#ffffff;
+      --body-bg:#f8f9fa;
+      --border:#dee2e6;
+    }
+    .dark-theme{
+      --nav-bg:#1f2937; /* slate-800 */
+      --sidebar-bg:#111827; /* gray-900 */
+      --sidebar-hover:#0b1220; /* darker */
+      --text:#e5e7eb; /* gray-200 */
+      --card-bg:#111827;
+      --body-bg:#0b1220;
+      --border:#1f2937;
+    }
+
+    html, body { height:100%; }
+    body{ background:var(--body-bg) !important; color:var(--text) !important; }
+
     #wrapper { display:flex; position:relative; }
     #scanImageInput{ width:70vw; border:1px solid #929292; border-radius:5px; padding:5px; }
 
     /* Sidebar hidden by default */
     #sidebar-wrapper {
       position:fixed; top:70px; left:-250px; width:250px; height:calc(100vh - 66px);
-      background-color:#34495e; transition:left .3s ease; z-index:1050;
+      background-color:var(--sidebar-bg); transition:left .3s ease; z-index:1050;
     }
     /* Sidebar visible when toggled */
     #wrapper.toggled #sidebar-wrapper { left:0; }
 
-    .content-section{ display:none; }
+    .content-section{ display:none; padding:8px; }
     .content-section.active{ display:block; }
-    #topNav{ background-color:#34495e; }
-    .list-group-item{ background-color:#34495e; border:none; }
-    .list-group-item:hover{ background-color:#2c3e50; color:#fff; cursor:pointer; }
-    #menu-toggle{ background-color:#34495e; border:none; color:#fff; }
+    #topNav{ background-color:var(--nav-bg); }
+    .list-group-item{ background-color:var(--sidebar-bg); border:none; color:#ffffff; }
+    .list-group-item:hover{ background-color:var(--sidebar-hover); color:#fff; cursor:pointer; }
+    #menu-toggle{ background-color:var(--nav-bg); border:none; color:#fff; }
 
     #editor { height:320px; background:#fff; }
     .ql-toolbar.ql-snow { border-radius:.5rem .5rem 0 0; }
     .ql-container.ql-snow { border-radius:0 0 .5rem .5rem; }
-  </style>
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-5YWF0N6E98"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-5YWF0N6E98');
-</script>
+    /* Cards respect theme */
+    .card{ background:var(--card-bg); border-color:var(--border); color:var(--text); }
+    .form-control, .form-select { background:var(--card-bg); color:var(--text); border-color:var(--border); }
+    .form-control::placeholder{ color:#9aa4b2; }
+
+    /* explicit dark-mode form controls fix */
+    .dark-theme .form-control,
+    .dark-theme textarea,
+    .dark-theme input,
+    .dark-theme select {
+      background: var(--card-bg) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    .dark-theme .form-control::placeholder { color: #94a3b8 !important; }
+
+    /* Drop zone */
+    #dropZone{
+      border:2px dashed var(--border);
+      border-radius:10px; padding:20px; text-align:center; cursor:pointer;
+      background:transparent; color:var(--text);
+    }
+    #dropZone.dragover{ border-color:#0d6efd; background:rgba(13,110,253,.08); }
+
+    /* Attachments gallery */
+    .attachment-pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.25rem .5rem; border:1px solid var(--border); border-radius:999px; margin:.125rem; }
+    .attachment-pill a{ text-decoration:none; color: inherit; }
+
+    /* Small helper text */
+    .text-muted.small{ color:#94a3b8 !important; }
+
+    /* Export QR modal styling */
+    .qr-modal .modal-body { text-align:center; }
+    .qr-modal .qr-actions { display:flex; gap:8px; justify-content:center; margin-top:12px; }
+
+    /* p2p small panel position if present */
+    #p2pModal { position:fixed; right:16px; bottom:16px; width:360px; z-index:2000; }
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg sticky-top" id="topNav">
@@ -55,6 +106,14 @@
         <i class="bi bi-list fs-4"></i>
       </button>
       <a class="navbar-brand mx-auto text-white" href="#">CampusNote 📘</a>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-light btn-sm" id="enableNotiBtn" title="Enable desktop notifications">
+          <i class="bi bi-bell"></i>
+        </button>
+        <button class="btn btn-outline-light btn-sm" id="toggle-theme-btn" title="Toggle theme">
+          <i class="bi bi-moon-stars"></i>
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -67,7 +126,7 @@
         <button class="list-group-item list-group-item-action text-white" data-section="notes-section">📒 Notes</button>
         <button class="list-group-item list-group-item-action text-white" data-section="export-section">📤 Export</button>
         <button class="list-group-item list-group-item-action text-white" data-section="import-section">📥 Import</button>
-        <button class="list-group-item list-group-item-action text-white" id="toggle-theme-btn">🌙 Toggle Theme</button>
+        <button class="list-group-item list-group-item-action text-white" data-section="sync-section">☁️ Cloud Sync</button>
       </div>
     </div>
   </div>
@@ -94,12 +153,23 @@
             <div id="editor"></div>
             <input type="text" id="tagInput" class="form-control mt-2" placeholder="Tags (comma separated)" />
             <input type="date" id="dateInput" class="form-control mt-2" />
+
+            <!-- NEW: reminder + attachments -->
+            <div class="row g-2 mt-2">
+              <div class="col-md-6">
+                <input type="datetime-local" id="reminderInput" class="form-control" placeholder="Reminder (optional)" />
+              </div>
+              <div class="col-md-6">
+                <input type="file" id="attachmentInput" class="form-control" multiple />
+              </div>
+            </div>
+            <div id="attachmentPreview" class="mt-2"></div>
           </div>
 
           <div class="d-flex gap-2 flex-wrap justify-content-center align-items-center">
             <button class="btn btn-success" onclick="saveNote()"><i class="bi bi-save"></i> Save</button>
             <button class="btn btn-primary text-white" onclick="startVoiceNote()"><i class="bi bi-mic-fill"></i> Voice</button>
-            <input type="file" id="scanImageInput" accept="image/*">
+            <input type="file" id="scanImageInput" accept="image/*" style="display:inline-block;">
             <button class="btn btn-warning" onclick="scanImageToText('scanImageInput')"><i class="bi bi-image"></i> Scan</button>
           </div>
         </div>
@@ -123,16 +193,76 @@
             <option value="pdf">PDF</option>
             <option value="docx">DOCX</option>
           </select>
-          <button class="btn btn-success" onclick="exportSelected()">Export Selected</button>
+          <div class="d-flex gap-2">
+            <button class="btn btn-success me-2" onclick="exportSelected()"><i class="bi bi-download"></i> Export Selected</button>
+            <button class="btn btn-outline-primary" onclick="exportSelectedViaQR()"><i class="bi bi-qr-code"></i> Export via QR</button>
+            <button class="btn btn-outline-secondary ms-auto" onclick="exportAllJSON()"><i class="bi bi-cloud-download"></i> Export All (JSON)</button>
+          </div>
         </div>
 
         <!-- Import Section -->
         <div id="import-section" class="content-section">
           <h4>Import Notes</h4>
-          <p class="text-muted small">Supported: .html (best), .docx (keeps most formatting), .pdf (text only), .txt</p>
+          <p class="text-muted small">Supported: .txt, .pdf, .docx, .html (best)</p>
           <div id="importList" class="mb-3"></div>
           <input type="file" id="importInput" class="form-control mb-2"
                  accept=".txt,.docx,.pdf,.html,.htm" onchange="handleImport(this)" />
+
+          <!-- Import via QR -->
+          <div class="mt-3">
+            <label class="form-label">Import via QR (upload QR image)</label>
+            <input type="file" id="importQRInput" class="form-control mb-2" accept="image/*" />
+            <div class="small text-muted">Upload a QR image </div>
+          </div>
+
+          <!-- NEW: drag & drop zone -->
+          <div id="dropZone" class="mt-3">
+            <i class="bi bi-box-arrow-in-down"></i> Drag & drop files here to import
+          </div>
+        </div>
+
+        <!-- NEW: Sync Section -->
+        <div id="sync-section" class="content-section">
+          <h4>☁️ Cloud Sync (Simulated)</h4>
+          <p class="text-muted small">Use this to back up or move your notes between devices. No server required.</p>
+          <div class="d-flex gap-2 flex-wrap mb-3">
+            <button class="btn btn-primary" onclick="exportAllJSON()"><i class="bi bi-cloud-download"></i> Export All (JSON)</button>
+            <input type="file" id="jsonImportInput" class="form-control" accept="application/json" onchange="importAllJSON(this)" />
+            <div class="form-check align-self-center ms-2">
+              <input class="form-check-input" type="checkbox" value="" id="replaceOnImport">
+              <label class="form-check-label" for="replaceOnImport">Replace existing data</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Or paste sync code</label>
+            <textarea id="syncCodeInput" class="form-control" rows="4" placeholder="Paste code here..."></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" onclick="copySyncCode()"><i class="bi bi-clipboard-check"></i> Copy Sync Code</button>
+            <button class="btn btn-outline-primary" onclick="applySyncCode()"><i class="bi bi-clipboard-plus"></i> Apply Sync Code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export QR Modal -->
+  <div class="modal fade" id="exportQRModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content qr-modal">
+        <div class="modal-header">
+          <h5 class="modal-title">Share Export (file.io)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="qrContainer"></div>
+          <div class="mt-2"><a id="exportLink" href="#" target="_blank"></a></div>
+          <div class="qr-actions">
+            <button id="saveQRBtn" class="btn btn-outline-secondary btn-sm">Save QR as Image</button>
+            <button id="copyLinkBtn" class="btn btn-outline-primary btn-sm">Copy Link</button>
+          </div>
+          <div class="mt-2 small text-muted">Link will be served by file.io (auto-expiring per file.io policy).</div>
         </div>
       </div>
     </div>
@@ -158,6 +288,10 @@
 
   <!-- PDF.js (read) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+  <!-- QR libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
   <script>
     /* ---------------------------
@@ -221,6 +355,29 @@
     let notes = JSON.parse(localStorage.getItem("notes")) || [];
     let folders = JSON.parse(localStorage.getItem("folders")) || ["General"];
     let editingNoteId = null;
+    let reminderTimers = new Map();
+
+    /* ---------------------------
+       Theme (Dark mode persistence)
+    ---------------------------- */
+    function applyTheme(theme){
+      const root = document.documentElement;
+      if(theme === 'dark'){
+        root.classList.add('dark-theme');
+      }else{
+        root.classList.remove('dark-theme');
+      }
+      localStorage.setItem('theme', theme);
+    }
+    // init theme
+    (function(){
+      const saved = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      applyTheme(saved);
+    })();
+    document.getElementById('toggle-theme-btn').addEventListener('click', ()=>{
+      const current = localStorage.getItem('theme') || 'light';
+      applyTheme(current === 'light' ? 'dark' : 'light');
+    });
 
     /* ---------------------------
        Helpers
@@ -233,9 +390,35 @@
           <h3>📌 ${n.folder} <small>(${n.date})</small></h3>
           ${n.text}
           ${n.tags?.length ? `<p><em>Tags: ${n.tags.join(", ")}</em></p>` : ""}
+          ${n.reminderAt ? `<p><em>Reminder: ${new Date(n.reminderAt).toLocaleString()}</em></p>` : ""}
+          ${n.attachments?.length ? `<p><em>Attachments: ${n.attachments.map(a=>a.name).join(", ")}</em></p>` : ""}
           <hr/>
         </div>
       `).join("");
+    }
+
+    function bytesToSize(bytes){
+      if(!bytes && bytes !== 0) return '';
+      const sizes = ['Bytes','KB','MB','GB','TB'];
+      const i = bytes===0 ? 0 : Math.floor(Math.log(bytes)/Math.log(1024));
+      return parseFloat((bytes/Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function readFilesAsDataURLs(fileList){
+      const files = Array.from(fileList||[]);
+      return Promise.all(files.map(f=>new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve({ name:f.name, type:f.type, size:f.size, data: reader.result });
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      })));
+    }
+
+    function previewAttachments(fileList){
+      const wrap = document.getElementById('attachmentPreview');
+      const files = Array.from(fileList||[]);
+      if(!files.length){ wrap.innerHTML=''; return; }
+      wrap.innerHTML = files.map(f=>`<span class="attachment-pill"><i class="bi bi-paperclip"></i>${f.name} <small class="text-muted">(${bytesToSize(f.size)})</small></span>`).join('');
     }
 
     /* ---------------------------
@@ -275,30 +458,42 @@
     renderFolders();
 
     /* ---------------------------
-       Save Note (New or Edit)
+       Save Note (New or Edit) + Attachments + Reminder
     ---------------------------- */
-    function saveNote() {
+    document.getElementById('attachmentInput').addEventListener('change', (e)=>{
+      previewAttachments(e.target.files);
+    });
+
+    async function saveNote() {
       let folder = document.getElementById("folderSelect").value || "General";
       let html = quill.root.innerHTML.trim();
       let tags = document.getElementById("tagInput").value.split(",").map(t => t.trim()).filter(Boolean);
       let date = document.getElementById("dateInput").value || new Date().toISOString().split("T")[0];
+      let reminderAt = document.getElementById('reminderInput').value ? new Date(document.getElementById('reminderInput').value).getTime() : null;
+      const attachFiles = document.getElementById('attachmentInput').files;
+      const attachments = await readFilesAsDataURLs(attachFiles);
 
       if (!stripHTML(html)) return alert("Please write something before saving.");
 
       if (editingNoteId) {
-        notes = notes.map(n => n.id === editingNoteId ? {...n, text: html, tags, folder, date} : n);
+        notes = notes.map(n => n.id === editingNoteId ? {...n, text: html, tags, folder, date, reminderAt, attachments} : n);
         editingNoteId = null;
         alert("Note updated!");
       } else {
-        notes.push({ id: Date.now(), folder, text: html, tags, date });
+        notes.push({ id: Date.now(), folder, text: html, tags, date, reminderAt, attachments, notified:false });
         alert("Note saved!");
       }
 
       localStorage.setItem("notes", JSON.stringify(notes));
       renderNotes();
       renderExportList();
+      scheduleAllReminders();
+
       quill.root.innerHTML = "";
       document.getElementById("tagInput").value = "";
+      document.getElementById('reminderInput').value = "";
+      document.getElementById('attachmentInput').value = "";
+      previewAttachments([]);
     }
 
     /* ---------------------------
@@ -314,12 +509,15 @@
       filtered.forEach(n => {
         let card = document.createElement("div");
         card.className = "card mb-2";
+        const attHTML = (n.attachments?.length ? `<div class="mt-2">${n.attachments.map(a=>`<span class='attachment-pill'><i class='bi bi-paperclip'></i><a download='${a.name}' href='${a.data}'>${a.name}</a> <small class='text-muted'>(${bytesToSize(a.size)})</small></span>`).join('')}</div>` : '');
         card.innerHTML = `
           <div class="card-body">
             <h6 class="card-subtitle mb-1"><b>${n.folder}</b> | ${n.date}</h6>
             <div class="card-text">${n.text}</div>
-            <small class="text-muted">Tags: ${n.tags.join(", ")}</small>
-            <div class="mt-2">
+            <small class="text-muted">Tags: ${n.tags.join(", ") || '—'}</small>
+            ${n.reminderAt ? `<div class="mt-1"><i class='bi bi-bell'></i> Reminder: <span>${new Date(n.reminderAt).toLocaleString()}</span> ${n.notified?'<span class="badge text-bg-secondary ms-1">Sent</span>':''}</div>`:''}
+            ${attHTML}
+            <div class="mt-2 d-flex gap-2">
               <button class="btn btn-sm btn-primary" onclick="editNote(${n.id})">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteNote(${n.id})">Delete</button>
             </div>
@@ -333,6 +531,11 @@
     }
     function deleteNote(id) {
       if (!confirm("Delete this note?")) return;
+      // clear timer
+      if(reminderTimers.has(id)){
+        clearTimeout(reminderTimers.get(id));
+        reminderTimers.delete(id);
+      }
       notes = notes.filter(n => n.id !== id);
       localStorage.setItem("notes", JSON.stringify(notes));
       renderNotes();
@@ -346,6 +549,9 @@
       document.getElementById("tagInput").value = note.tags.join(", ");
       document.getElementById("folderSelect").value = note.folder;
       document.getElementById("dateInput").value = note.date;
+      document.getElementById('reminderInput').value = note.reminderAt ? new Date(note.reminderAt).toISOString().slice(0,16) : '';
+      document.getElementById('attachmentInput').value = '';
+      previewAttachments([]);
 
       // Jump to new note section
       document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
@@ -420,10 +626,125 @@
     }
 
     /* ---------------------------
-       Import Notes (auto-format)
+       Export via QR (upload to file.io and show QR modal)
     ---------------------------- */
-    async function handleImport(input) {
-      const file = input.files[0];
+    async function exportSelectedViaQR() {
+      const ids = Array.from(document.querySelectorAll(".export-check:checked")).map(c => +c.value);
+      const selectedNotes = notes.filter(n => ids.includes(n.id));
+      if (!selectedNotes.length) return alert("Select at least one note.");
+
+      const format = document.getElementById("exportFormat").value;
+      const filenameRaw = (document.getElementById("filenameInput").value || "notes").trim();
+      const filename = filenameRaw || "notes";
+
+      let blob;
+      let ext;
+      if (format === "txt") {
+        const plain = stripHTML(buildExportHTML(selectedNotes));
+        blob = new Blob([plain], {type: "text/plain;charset=utf-8"});
+        ext = ".txt";
+        saveAs(blob, filename + ext); // local download
+      } else if (format === "pdf") {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+        const wrapper = document.createElement('div');
+        wrapper.style.padding = '20px';
+        wrapper.style.fontFamily = 'Helvetica, Arial, sans-serif';
+        wrapper.style.fontSize = '12pt';
+        wrapper.innerHTML = buildExportHTML(selectedNotes);
+        await doc.html(wrapper, { x: 40, y: 40, width: 515, autoPaging: 'text', windowWidth: 1000 });
+        blob = doc.output('blob');
+        ext = ".pdf";
+        doc.save(filename + ext); // local download
+      } else if (format === "docx") {
+        const html = `
+          <!DOCTYPE html><html><head><meta charset="utf-8" />
+          <style>body { font-family: Arial, Helvetica, sans-serif; }</style>
+          </head><body>${buildExportHTML(selectedNotes)}</body></html>`;
+        blob = window.htmlDocx.asBlob(html);
+        ext = ".docx";
+        saveAs(blob, filename + ext); // local download
+      } else {
+        return alert("Unsupported format for QR export.");
+      }
+
+      // Upload to file.io
+      try {
+        const form = new FormData();
+        const fileNameWithExt = filename + ext;
+        form.append('file', blob, fileNameWithExt);
+        // Optionally you can set expires via form.append('expires','1d') etc
+        const res = await fetch('https://file.io', { method: 'POST', body: form });
+        const data = await res.json();
+        if(!data || !data.success || !data.link) {
+          console.error('file.io response', data);
+          return alert('Upload to file.io failed. See console for details.');
+        }
+        const link = data.link;
+        showExportQRModal(link);
+      } catch (e) {
+        console.error(e);
+        alert('Failed to upload to file.io: ' + e.message);
+      }
+    }
+
+    function showExportQRModal(link){
+      // render QR
+      const container = document.getElementById('qrContainer');
+      container.innerHTML = '';
+      try {
+        new QRCode(container, { text: link, width: 220, height: 220 });
+      } catch(e){
+        // fallback: create an <img> pointing to Google Chart (if QR lib failed)
+        const img = document.createElement('img');
+        img.src = `https://chart.googleapis.com/chart?cht=qr&chs=220x220&chl=${encodeURIComponent(link)}`;
+        container.appendChild(img);
+      }
+      const exportLink = document.getElementById('exportLink');
+      exportLink.href = link;
+      exportLink.textContent = link;
+      // show modal
+      const modalEl = new bootstrap.Modal(document.getElementById('exportQRModal'));
+      modalEl.show();
+
+      // setup save button
+      document.getElementById('saveQRBtn').onclick = () => {
+        // find canvas or img inside container
+        const canvas = container.querySelector('canvas');
+        if(canvas){
+          const url = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'campusnote_export_qr.png';
+          a.click();
+        } else {
+          const img = container.querySelector('img');
+          if(img){
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = 'campusnote_export_qr.png';
+            a.click();
+          } else {
+            alert('QR not found to save.');
+          }
+        }
+      };
+
+      document.getElementById('copyLinkBtn').onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(link);
+          alert('Link copied to clipboard.');
+        } catch {
+          prompt('Copy link manually:', link);
+        }
+      };
+    }
+
+    /* ---------------------------
+       Import Notes (auto-format) + Drag & Drop
+    ---------------------------- */
+    async function handleImport(inputOrFile) {
+      const file = inputOrFile.files ? inputOrFile.files[0] : inputOrFile; // supports File from DnD or File object
       if (!file) return;
 
       const ext = (file.name.split('.').pop() || '').toLowerCase();
@@ -493,11 +814,71 @@
       alert("Unsupported file type.");
     }
 
+    // Drag & Drop logic
+    const dropZone = document.getElementById('dropZone');
+    ;['dragenter','dragover'].forEach(evt=>{
+      dropZone.addEventListener(evt, (e)=>{ e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
+    });
+    ;['dragleave','drop'].forEach(evt=>{
+      dropZone.addEventListener(evt, (e)=>{ e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
+    });
+    dropZone.addEventListener('drop', async (e)=>{
+      const files = e.dataTransfer.files;
+      if(!files || !files.length) return;
+      // Import first file (you can loop to support multiple)
+      await handleImport(files[0]);
+    });
+
+    // Import via QR image (decode and fetch file)
+    document.getElementById('importQRInput').addEventListener('change', async function(){
+      const file = this.files[0];
+      if(!file) return alert('Select a QR image file.');
+      // read image
+      const img = new Image();
+      const fr = new FileReader();
+      fr.onload = () => {
+        img.onload = async () => {
+          // draw on canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width; canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img,0,0);
+          const imgData = ctx.getImageData(0,0,canvas.width, canvas.height);
+          const code = jsQR(imgData.data, imgData.width, imgData.height);
+          if(!code || !code.data) return alert('No QR code found in image.');
+          const link = code.data.trim();
+          // fetch the file at link (file.io)
+          try {
+            const resp = await fetch(link);
+            if(!resp.ok) throw new Error('Failed to fetch file from link.');
+            const blob = await resp.blob();
+            // try to guess filename
+            let filename = (link.split('/').pop() || 'imported_file');
+            // if blob has type, add extension if missing
+            if(!filename.includes('.') && blob.type){
+              const map = { 'application/pdf': '.pdf', 'text/plain': '.txt', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx' };
+              filename += map[blob.type] || '';
+            }
+            const fileObj = new File([blob], filename, { type: blob.type });
+            await handleImport(fileObj);
+            alert('Imported file from QR link.');
+          } catch (e) {
+            console.error(e);
+            alert('Failed to fetch/import file from QR link: ' + e.message);
+          }
+        };
+        img.onerror = ()=> alert('Failed to load image for QR decoding.');
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+      this.value = '';
+    });
+
     /* ---------------------------
        Voice-to-Text
     ---------------------------- */
     function startVoiceNote() {
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
         alert("Speech Recognition is not supported in this browser.");
         return;
       }
@@ -537,10 +918,158 @@
           alert("Error scanning image.");
         });
     }
+
+    /* ---------------------------
+       Reminders / Notifications
+    ---------------------------- */
+    const enableBtn = document.getElementById('enableNotiBtn');
+    enableBtn.addEventListener('click', async ()=>{
+      if(!('Notification' in window)) return alert('Notifications not supported in this browser.');
+      const perm = await Notification.requestPermission();
+      if(perm !== 'granted') return alert('Notifications permission denied.');
+      scheduleAllReminders();
+      alert('Notifications enabled. We\'ll remind you at the set times while this tab is open.');
+    });
+
+    function scheduleAllReminders(){
+      // Clear existing timers
+      for (const [id, t] of reminderTimers){ clearTimeout(t); }
+      reminderTimers.clear();
+
+      const now = Date.now();
+      notes.forEach(n=>{
+        if(n.reminderAt && !n.notified){
+          const delay = Math.max(0, n.reminderAt - now);
+          const timer = setTimeout(()=>{
+            try{
+              if('Notification' in window && Notification.permission==='granted'){
+                new Notification('CampusNote Reminder', { body: stripHTML(n.text).slice(0,100) || 'Note reminder', icon: '' });
+              }else{
+                alert('Reminder: ' + (stripHTML(n.text).slice(0,80) || 'Your note is due.'));
+              }
+            }catch(e){ console.warn(e); }
+            // mark as sent
+            n.notified = true;
+            localStorage.setItem('notes', JSON.stringify(notes));
+            renderNotes();
+          }, delay);
+          reminderTimers.set(n.id, timer);
+        }
+      });
+    }
+
+    // Reschedule on load/visibility change
+    document.addEventListener('visibilitychange', ()=>{
+      if(!document.hidden) scheduleAllReminders();
+    });
+
+    // initial schedule
+    scheduleAllReminders();
+
+    /* ---------------------------
+       Cloud Sync (JSON export/import and code)
+    ---------------------------- */
+    function exportAllJSON(){
+      const payload = { version:1, exportedAt: new Date().toISOString(), folders, notes };
+      const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+      saveAs(blob, `CampusNote_Backup_${new Date().toISOString().slice(0,10)}.json`);
+    }
+
+    async function importAllJSON(input){
+      const file = input.files[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if(!data || !Array.isArray(data.notes) || !Array.isArray(data.folders)) throw new Error('Invalid backup format');
+        const replace = document.getElementById('replaceOnImport').checked;
+
+        if(replace){
+          folders = Array.from(new Set(data.folders));
+          notes = data.notes;
+        }else{
+          // merge
+          folders = Array.from(new Set([...folders, ...data.folders]));
+          const existingIds = new Set(notes.map(n=>n.id));
+          const merged = data.notes.map(n=> existingIds.has(n.id) ? { ...n, id: Date.now()+Math.floor(Math.random()*100000) } : n);
+          notes = [...notes, ...merged];
+        }
+        localStorage.setItem('folders', JSON.stringify(folders));
+        localStorage.setItem('notes', JSON.stringify(notes));
+        renderFolders();
+        renderNotes();
+        renderExportList();
+        scheduleAllReminders();
+        alert('Import complete.');
+        input.value = '';
+      }catch(e){
+        console.error(e);
+        alert('Failed to import JSON: ' + e.message);
+      }
+    }
+
+    function copySyncCode(){
+      const payload = { version:1, folders, notes };
+      const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      navigator.clipboard.writeText(code).then(()=>{
+        alert('Sync code copied to clipboard.');
+      }).catch(()=>{
+        // fallback
+        const ta = document.getElementById('syncCodeInput');
+        ta.value = code;
+        ta.select();
+        document.execCommand('copy');
+        alert('Sync code placed in the textbox. Copy it manually if needed.');
+      });
+    }
+
+    function applySyncCode(){
+      const code = document.getElementById('syncCodeInput').value.trim();
+      if(!code) return alert('Paste a sync code first.');
+      try{
+        const json = decodeURIComponent(escape(atob(code)));
+        const data = JSON.parse(json);
+        if(!data || !Array.isArray(data.notes) || !Array.isArray(data.folders)) throw new Error('Invalid sync code');
+        const replace = document.getElementById('replaceOnImport').checked;
+        if(replace){
+          folders = Array.from(new Set(data.folders));
+          notes = data.notes;
+        }else{
+          folders = Array.from(new Set([...folders, ...data.folders]));
+          const existingIds = new Set(notes.map(n=>n.id));
+          const merged = data.notes.map(n=> existingIds.has(n.id) ? { ...n, id: Date.now()+Math.floor(Math.random()*100000) } : n);
+          notes = [...notes, ...merged];
+        }
+        localStorage.setItem('folders', JSON.stringify(folders));
+        localStorage.setItem('notes', JSON.stringify(notes));
+        renderFolders();
+        renderNotes();
+        renderExportList();
+        scheduleAllReminders();
+        alert('Sync code applied.');
+      }catch(e){
+        console.error(e);
+        alert('Failed to apply sync code: ' + e.message);
+      }
+    }
+
+    /* ---------------------------
+       P2P File Transfer section (if present earlier)
+       Note: If you have P2P UI already in canvas, it's preserved.
+       Implementation left as previously injected (not duplicated here).
+    ---------------------------- */
+
+    /* ---------------------------
+       QR and file.io helpers (already included above)
+    ---------------------------- */
+
   </script>
+
   <!-- Tesseract.js for OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+
+  <!-- Bootstrap bundle (for modal) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
-    
-

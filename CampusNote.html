@@ -1,300 +1,554 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CampusNote 📘</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CampusNote 📘</title>
 
-  <!-- Bootstrap + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
-  <link rel="manifest" href="/manifest.json" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="manifest" href="/manifest.json" />
 
-  <!-- Quill (Rich Text) -->
-  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
 
-  <style>
-    :root{
-      --nav-bg:#34495e;
-      --sidebar-bg:#34495e;
-      --sidebar-hover:#2c3e50;
-      --text:#212529;
-      --card-bg:#ffffff;
-      --body-bg:#f8f9fa;
-      --border:#dee2e6;
-    }
-    .dark-theme{
-      --nav-bg:#1f2937; /* slate-800 */
-      --sidebar-bg:#111827; /* gray-900 */
-      --sidebar-hover:#0b1220; /* darker */
-      --text:#e5e7eb; /* gray-200 */
-      --card-bg:#111827;
-      --body-bg:#0b1220;
-      --border:#1f2937;
-    }
+    <style>
+        :root{
+            --nav-bg:#34495e;
+            --sidebar-bg:#34495e;
+            --sidebar-hover:#2c3e50;
+            --text:#212529;
+            --card-bg:#ffffff;
+            --body-bg:#f8f9fa;
+            --border:#dee2e6;
+        }
+        .dark-theme{
+            --nav-bg:#1f2937; /* slate-800 */
+            --sidebar-bg:#111827; /* gray-900 */
+            --sidebar-hover:#0b1220; /* darker */
+            --text:#e5e7eb; /* gray-200 */
+            --card-bg:#111827;
+            --body-bg:#0b1220;
+            --border:#1f2937;
+        }
 
-    html, body { height:100%; }
-    body{ background:var(--body-bg) !important; color:var(--text) !important; }
+        html, body { height:100%; }
+        body{ background:var(--body-bg) !important; color:var(--text) !important; }
 
-    #wrapper { display:flex; position:relative; }
-    #scanImageInput{ width:70vw; border:1px solid #929292; border-radius:5px; padding:5px; }
+        #wrapper { display:flex; position:relative; }
+        #scanImageInput{ width:70vw; border:1px solid #929292; border-radius:5px; padding:5px; }
 
-    /* Sidebar hidden by default */
-    #sidebar-wrapper {
-      position:fixed; top:70px; left:-250px; width:250px; height:calc(100vh - 66px);
-      background-color:var(--sidebar-bg); transition:left .3s ease; z-index:1050;
-    }
-    /* Sidebar visible when toggled */
-    #wrapper.toggled #sidebar-wrapper { left:0; }
+        /* Sidebar hidden by default */
+        #sidebar-wrapper {
+            position:fixed; top:70px; left:-250px; width:250px; height:calc(100vh - 66px);
+            background-color:var(--sidebar-bg); transition:left .3s ease; z-index:1050;
+        }
+        /* Sidebar visible when toggled */
+        #wrapper.toggled #sidebar-wrapper { left:0; }
 
-    .content-section{ display:none; padding:8px; }
-    .content-section.active{ display:block; }
-    #topNav{ background-color:var(--nav-bg); }
-    .list-group-item{ background-color:var(--sidebar-bg); border:none; color:#ffffff; }
-    .list-group-item:hover{ background-color:var(--sidebar-hover); color:#fff; cursor:pointer; }
-    #menu-toggle{ background-color:var(--nav-bg); border:none; color:#fff; }
+        .content-section{ display:none; padding:8px; }
+        .content-section.active{ display:block; }
+        #topNav{ background-color:var(--nav-bg); }
+        .list-group-item{ background-color:var(--sidebar-bg); border:none; color:#ffffff; }
+        .list-group-item:hover{ background-color:var(--sidebar-hover); color:#fff; cursor:pointer; }
+        #menu-toggle{ background-color:var(--nav-bg); border:none; color:#fff; }
 
-    #editor { height:320px; background:#fff; }
-    .ql-toolbar.ql-snow { border-radius:.5rem .5rem 0 0; }
-    .ql-container.ql-snow { border-radius:0 0 .5rem .5rem; }
+        #editor { height:320px; background:#fff; }
+        .ql-toolbar.ql-snow { border-radius:.5rem .5rem 0 0; }
+        .ql-container.ql-snow { border-radius:0 0 .5rem .5rem; }
 
-    /* Cards respect theme */
-    .card{ background:var(--card-bg); border-color:var(--border); color:var(--text); }
-    .form-control, .form-select { background:var(--card-bg); color:var(--text); border-color:var(--border); }
-    .form-control::placeholder{ color:#9aa4b2; }
+        /* Cards respect theme */
+        .card{ background:var(--card-bg); border-color:var(--border); color:var(--text); }
+        .form-control, .form-select { background:var(--card-bg); color:var(--text); border-color:var(--border); }
+        .form-control::placeholder{ color:#9aa4b2; }
 
-    /* explicit dark-mode form controls fix */
-    .dark-theme .form-control,
-    .dark-theme textarea,
-    .dark-theme input,
-    .dark-theme select {
-      background: var(--card-bg) !important;
-      color: var(--text) !important;
-      border-color: var(--border) !important;
-    }
-    .dark-theme .form-control::placeholder { color: #94a3b8 !important; }
+        /* explicit dark-mode form controls fix */
+        .dark-theme .form-control,
+        .dark-theme textarea,
+        .dark-theme input,
+        .dark-theme select {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        .dark-theme .form-control::placeholder { color: #94a3b8 !important; }
 
-    /* Drop zone */
-    #dropZone{
-      border:2px dashed var(--border);
-      border-radius:10px; padding:20px; text-align:center; cursor:pointer;
-      background:transparent; color:var(--text);
-    }
-    #dropZone.dragover{ border-color:#0d6efd; background:rgba(13,110,253,.08); }
+        /* Drop zone */
+        #dropZone{
+            border:2px dashed var(--border);
+            border-radius:10px; padding:20px; text-align:center; cursor:pointer;
+            background:transparent; color:var(--text);
+        }
+        #dropZone.dragover{ border-color:#0d6efd; background:rgba(13,110,253,.08); }
 
-    /* Attachments gallery */
-    .attachment-pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.25rem .5rem; border:1px solid var(--border); border-radius:999px; margin:.125rem; }
-    .attachment-pill a{ text-decoration:none; color: inherit; }
+        /* Attachments gallery */
+        .attachment-pill{ display:inline-flex; align-items:center; gap:.5rem; padding:.25rem .5rem; border:1px solid var(--border); border-radius:999px; margin:.125rem; }
+        .attachment-pill a{ text-decoration:none; color: inherit; }
 
-    /* Small helper text */
-    .text-muted.small{ color:#94a3b8 !important; }
+        /* Small helper text */
+        .text-muted.small{ color:#94a3b8 !important; }
 
-    /* Export QR modal styling */
-    .qr-modal .modal-body { text-align:center; }
-    .qr-modal .qr-actions { display:flex; gap:8px; justify-content:center; margin-top:12px; }
+        /* Export QR modal styling */
+        .qr-modal .modal-body { text-align:center; }
+        .qr-modal .qr-actions { display:flex; gap:8px; justify-content:center; margin-top:12px; }
 
-    /* p2p small panel position if present */
-    #p2pModal { position:fixed; right:16px; bottom:16px; width:360px; z-index:2000; }
-  </style>
+        /* p2p small panel position if present */
+        #p2pModal { position:fixed; right:16px; bottom:16px; width:360px; z-index:2000; }
+        
+        #timerDisplay {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg sticky-top" id="topNav">
-    <div class="container-fluid">
-      <button class="btn btn-dark" type="button" id="menu-toggle">
-        <i class="bi bi-list fs-4"></i>
-      </button>
-      <a class="navbar-brand mx-auto text-white" href="#">CampusNote 📘</a>
-      <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-outline-light btn-sm" id="enableNotiBtn" title="Enable desktop notifications">
-          <i class="bi bi-bell"></i>
-        </button>
-        <button class="btn btn-outline-light btn-sm" id="toggle-theme-btn" title="Toggle theme">
-          <i class="bi bi-moon-stars"></i>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Wrapper -->
-  <div class="d-flex" id="wrapper">
-    <!-- Sidebar -->
-    <div id="sidebar-wrapper">
-      <div class="list-group list-group-flush">
-        <button class="list-group-item list-group-item-action text-white" data-section="new-note-section">📝 New Note</button>
-        <button class="list-group-item list-group-item-action text-white" data-section="notes-section">📒 Notes</button>
-        <button class="list-group-item list-group-item-action text-white" data-section="export-section">📤 Export</button>
-        <button class="list-group-item list-group-item-action text-white" data-section="import-section">📥 Import</button>
-        <button class="list-group-item list-group-item-action text-white" data-section="sync-section">☁️ Cloud Sync</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Page content -->
-  <div id="page-content-wrapper" class="flex-grow-1">
-    <div class="container-fluid py-4">
-      <div id="main-content">
-        <!-- New Note Section -->
-        <div id="new-note-section" class="content-section active">
-          <h4>Create a New Note</h4>
-          <div class="mb-3">
-            <select id="folderSelect" class="form-select">
-              <option value="">All Folders</option>
-            </select>
-            <div class="input-group mt-2">
-              <input type="text" id="newFolderInput" class="form-control" placeholder="Create new folder" />
-              <button class="btn btn-outline-primary" onclick="createFolderBtn()">Add Folder</button>
+    <nav class="navbar navbar-expand-lg sticky-top" id="topNav">
+        <div class="container-fluid">
+            <button class="btn btn-dark" type="button" id="menu-toggle">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <a class="navbar-brand mx-auto text-white" href="#">CampusNote 📘</a>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-light btn-sm" id="enableNotiBtn" title="Enable desktop notifications">
+                    <i class="bi bi-bell"></i>
+                </button>
+                <button class="btn btn-outline-light btn-sm" id="toggle-theme-btn" title="Toggle theme">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
             </div>
-          </div>
+        </div>
+    </nav>
 
-          <div class="mb-3">
-            <!-- Rich text editor -->
-            <div id="editor"></div>
-            <input type="text" id="tagInput" class="form-control mt-2" placeholder="Tags (comma separated)" />
-            <input type="date" id="dateInput" class="form-control mt-2" />
-
-            <!-- NEW: reminder + attachments -->
-            <div class="row g-2 mt-2">
-              <div class="col-md-6">
-                <input type="datetime-local" id="reminderInput" class="form-control" placeholder="Reminder (optional)" />
-              </div>
-              <div class="col-md-6">
-                <input type="file" id="attachmentInput" class="form-control" multiple />
-              </div>
+    <div class="d-flex" id="wrapper">
+        <div id="sidebar-wrapper">
+            <div class="list-group list-group-flush">
+                <button class="list-group-item list-group-item-action text-white" data-section="new-note-section">📝 New Note</button>
+                <button class="list-group-item list-group-item-action text-white" data-section="notes-section">📒 Notes</button>
+                <button class="list-group-item list-group-item-action text-white" data-section="tools-section">🧰 Tools</button>
+                <button class="list-group-item list-group-item-action text-white" data-section="export-section">📤 Export</button>
+                <button class="list-group-item list-group-item-action text-white" data-section="import-section">📥 Import</button>
+                <button class="list-group-item list-group-item-action text-white" data-section="sync-section">☁️ Cloud Sync</button>
             </div>
-            <div id="attachmentPreview" class="mt-2"></div>
-          </div>
-
-          <div class="d-flex gap-2 flex-wrap justify-content-center align-items-center">
-            <button class="btn btn-success" onclick="saveNote()"><i class="bi bi-save"></i> Save</button>
-            <button class="btn btn-primary text-white" onclick="startVoiceNote()"><i class="bi bi-mic-fill"></i> Voice</button>
-            <input type="file" id="scanImageInput" accept="image/*" style="display:inline-block;">
-            <button class="btn btn-warning" onclick="scanImageToText('scanImageInput')"><i class="bi bi-image"></i> Scan</button>
-          </div>
         </div>
+    </div>
 
-        <!-- Notes Section -->
-        <div id="notes-section" class="content-section">
-          <h4>My Notes</h4>
-          <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search notes..." oninput="searchNotes()" />
-          <div id="notesContainer"></div>
-        </div>
+    <div id="page-content-wrapper" class="flex-grow-1">
+        <div class="container-fluid py-4">
+            <div id="main-content">
+                <div id="new-note-section" class="content-section active">
+                    <h4>Create a New Note</h4>
+                    <div class="mb-3">
+                        <select id="folderSelect" class="form-select">
+                            <option value="">All Folders</option>
+                        </select>
+                        <div class="input-group mt-2">
+                            <input type="text" id="newFolderInput" class="form-control" placeholder="Create new folder" />
+                            <button class="btn btn-outline-primary" onclick="createFolderBtn()">Add Folder</button>
+                        </div>
+                    </div>
 
-        <!-- Export Section -->
-        <div id="export-section" class="content-section">
-          <h4>Export Notes</h4>
-          <div id="exportList" class="mb-3"></div>
+                    <div class="mb-3">
+                        <div id="editor"></div>
+                        <input type="text" id="tagInput" class="form-control mt-2" placeholder="Tags (comma separated)" />
+                        <input type="date" id="dateInput" class="form-control mt-2" />
 
-          <input id="filenameInput" class="form-control mb-2" placeholder="File name (without extension)" />
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <input type="datetime-local" id="reminderInput" class="form-control" placeholder="Reminder (optional)" />
+                            </div>
+                            <div class="col-md-6">
+                                <input type="file" id="attachmentInput" class="form-control" multiple />
+                            </div>
+                        </div>
+                        <div id="attachmentPreview" class="mt-2"></div>
+                    </div>
 
-          <select id="exportFormat" class="form-select mb-2">
-            <option value="txt">TXT</option>
-            <option value="pdf">PDF</option>
-            <option value="docx">DOCX</option>
-          </select>
-          <div class="d-flex gap-2">
-            <button class="btn btn-success me-2" onclick="exportSelected()"><i class="bi bi-download"></i> Export Selected</button>
-            <button class="btn btn-outline-primary" onclick="exportSelectedViaQR()"><i class="bi bi-qr-code"></i> Export via QR</button>
-            <button class="btn btn-outline-secondary ms-auto" onclick="exportAllJSON()"><i class="bi bi-cloud-download"></i> Export All (JSON)</button>
-          </div>
-        </div>
+                    <div class="d-flex gap-2 flex-wrap justify-content-center align-items-center">
+                        <button class="btn btn-success" onclick="saveNote()"><i class="bi bi-save"></i> Save</button>
+                        <button class="btn btn-primary text-white" onclick="startVoiceNote()"><i class="bi bi-mic-fill"></i> Voice</button>
+                        <input type="file" id="scanImageInput" accept="image/*" style="display:inline-block;">
+                        <button class="btn btn-warning" onclick="scanImageToText('scanImageInput')"><i class="bi bi-image"></i> Scan</button>
+                    </div>
+                </div>
 
-        <!-- Import Section -->
-        <div id="import-section" class="content-section">
-          <h4>Import Notes</h4>
-          <p class="text-muted small">Supported: .txt, .pdf, .docx, .html (best)</p>
-          <div id="importList" class="mb-3"></div>
-          <input type="file" id="importInput" class="form-control mb-2"
-                 accept=".txt,.docx,.pdf,.html,.htm" onchange="handleImport(this)" />
+                <div id="notes-section" class="content-section">
+                    <h4>My Notes</h4>
+                    <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search notes..." oninput="searchNotes()" />
+                    <div id="notesContainer"></div>
+                </div>
+                
+                <div id="tools-section" class="content-section">
+                    <h4>Student Tools</h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-file-image"></i> Image to PDF</h5>
+                                    <p class="card-text">Combine multiple images into a single PDF file.</p>
+                                    <input type="file" id="imageToPdfInput" class="form-control mb-2" accept="image/*" multiple />
+                                    <div id="imageToPdfPreview" class="d-flex flex-wrap gap-2 mb-2"></div>
+                                    <button class="btn btn-primary" id="imageToPdfBtn" disabled><i class="bi bi-file-pdf"></i> Convert</button>
+                                </div>
+                            </div>
+                        </div>
 
-          <!-- Import via QR -->
-          <div class="mt-3">
-            <label class="form-label">Import via QR (upload QR image)</label>
-            <input type="file" id="importQRInput" class="form-control mb-2" accept="image/*" />
-            <div class="small text-muted">Upload a QR image </div>
-          </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-file-earmark-word"></i> DOCX to PDF</h5>
+                                    <p class="card-text">Convert your Microsoft Word documents to PDF format.</p>
+                                    <input type="file" id="docxToPdfInput" class="form-control mb-2" accept=".docx" />
+                                    <button class="btn btn-primary" id="docxToPdfBtn" disabled><i class="bi bi-file-pdf"></i> Convert</button>
+                                </div>
+                            </div>
+                        </div>
 
-          <!-- NEW: drag & drop zone -->
-          <div id="dropZone" class="mt-3">
-            <i class="bi bi-box-arrow-in-down"></i> Drag & drop files here to import
-          </div>
-        </div>
-
-        <!-- NEW: Sync Section -->
-        <div id="sync-section" class="content-section">
-          <h4>☁️ Cloud Sync (Simulated)</h4>
-          <p class="text-muted small">Use this to back up or move your notes between devices. No server required.</p>
-          <div class="d-flex gap-2 flex-wrap mb-3">
-            <button class="btn btn-primary" onclick="exportAllJSON()"><i class="bi bi-cloud-download"></i> Export All (JSON)</button>
-            <input type="file" id="jsonImportInput" class="form-control" accept="application/json" onchange="importAllJSON(this)" />
-            <div class="form-check align-self-center ms-2">
-              <input class="form-check-input" type="checkbox" value="" id="replaceOnImport">
-              <label class="form-check-label" for="replaceOnImport">Replace existing data</label>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-clock-history"></i> Study Timer</h5>
+                                    <p class="card-text">A simple timer to help you focus on your studies.</p>
+                                    <div id="timerDisplay">25:00</div>
+                                    <div class="input-group mb-2">
+                                        <input type="number" id="minutesInput" class="form-control text-center" value="25" min="1" max="60" />
+                                        <span class="input-group-text">minutes</span>
+                                    </div>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <button class="btn btn-success" id="startTimerBtn"><i class="bi bi-play-fill"></i> Start</button>
+                                        <button class="btn btn-warning" id="pauseTimerBtn" disabled><i class="bi bi-pause-fill"></i> Pause</button>
+                                        <button class="btn btn-danger" id="resetTimerBtn" disabled><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+    <div class="card h-100">
+        <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-calendar-check"></i> Assignment Planner</h5>
+            <p class="card-text">Organize and track your assignments.</p>
+            <div class="mb-3">
+                <input type="text" id="assignmentName" class="form-control mb-2" placeholder="Assignment Name" />
+                <input type="date" id="assignmentDueDate" class="form-control mb-2" />
+                <button class="btn btn-success" id="addAssignmentBtn"><i class="bi bi-plus-circle"></i> Add Assignment</button>
             </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Or paste sync code</label>
-            <textarea id="syncCodeInput" class="form-control" rows="4" placeholder="Paste code here..."></textarea>
-          </div>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-success" onclick="copySyncCode()"><i class="bi bi-clipboard-check"></i> Copy Sync Code</button>
-            <button class="btn btn-outline-primary" onclick="applySyncCode()"><i class="bi bi-clipboard-plus"></i> Apply Sync Code</button>
-          </div>
+            <div id="assignmentsList" class="mt-3">
+                </div>
         </div>
-      </div>
     </div>
-  </div>
+</div>
+                    </div>
+                </div>
 
-  <!-- Export QR Modal -->
-  <div class="modal fade" id="exportQRModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content qr-modal">
-        <div class="modal-header">
-          <h5 class="modal-title">Share Export (file.io)</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div id="export-section" class="content-section">
+                    <h4>Export Notes</h4>
+                    <div id="exportList" class="mb-3"></div>
+
+                    <input id="filenameInput" class="form-control mb-2" placeholder="File name (without extension)" />
+
+                    <select id="exportFormat" class="form-select mb-2">
+                        <option value="txt">TXT</option>
+                        <option value="pdf">PDF</option>
+                        <option value="docx">DOCX</option>
+                    </select>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success me-2" onclick="exportSelected()"><i class="bi bi-download"></i> Export Selected</button>
+                        <button class="btn btn-outline-primary" onclick="exportSelectedViaQR()"><i class="bi bi-qr-code"></i> Export via QR</button>
+                        <button class="btn btn-outline-secondary ms-auto" onclick="exportAllJSON()"><i class="bi bi-cloud-download"></i> Export All (JSON)</button>
+                    </div>
+                </div>
+
+                <div id="import-section" class="content-section">
+                    <h4>Import Notes</h4>
+                    <p class="text-muted small">Supported: .txt, .pdf, .docx, .html (best)</p>
+                    <div id="importList" class="mb-3"></div>
+                    <input type="file" id="importInput" class="form-control mb-2"
+                           accept=".txt,.docx,.pdf,.html,.htm" onchange="handleImport(this)" />
+
+                    <div class="mt-3">
+                        <label class="form-label">Import via QR (upload QR image)</label>
+                        <input type="file" id="importQRInput" class="form-control mb-2" accept="image/*" />
+                        <div class="small text-muted">Upload a QR image </div>
+                    </div>
+
+                    <div id="dropZone" class="mt-3">
+                        <i class="bi bi-box-arrow-in-down"></i> Drag & drop files here to import
+                    </div>
+                </div>
+
+                <div id="sync-section" class="content-section">
+                    <h4>☁️ Cloud Sync (Simulated)</h4>
+                    <p class="text-muted small">Use this to back up or move your notes between devices. No server required.</p>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <button class="btn btn-primary" onclick="exportAllJSON()"><i class="bi bi-cloud-download"></i> Export All (JSON)</button>
+                        <input type="file" id="jsonImportInput" class="form-control" accept="application/json" onchange="importAllJSON(this)" />
+                        <div class="form-check align-self-center ms-2">
+                            <input class="form-check-input" type="checkbox" value="" id="replaceOnImport">
+                            <label class="form-check-label" for="replaceOnImport">Replace existing data</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Or paste sync code</label>
+                        <textarea id="syncCodeInput" class="form-control" rows="4" placeholder="Paste code here..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success" onclick="copySyncCode()"><i class="bi bi-clipboard-check"></i> Copy Sync Code</button>
+                        <button class="btn btn-outline-primary" onclick="applySyncCode()"><i class="bi bi-clipboard-plus"></i> Apply Sync Code</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <div id="qrContainer"></div>
-          <div class="mt-2"><a id="exportLink" href="#" target="_blank"></a></div>
-          <div class="qr-actions">
-            <button id="saveQRBtn" class="btn btn-outline-secondary btn-sm">Save QR as Image</button>
-            <button id="copyLinkBtn" class="btn btn-outline-primary btn-sm">Copy Link</button>
-          </div>
-          <div class="mt-2 small text-muted">Link will be served by file.io (auto-expiring per file.io policy).</div>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Vendor scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <div class="modal fade" id="exportQRModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content qr-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">Share Export (file.io)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="qrContainer"></div>
+                    <div class="mt-2"><a id="exportLink" href="#" target="_blank"></a></div>
+                    <div class="qr-actions">
+                        <button id="saveQRBtn" class="btn btn-outline-secondary btn-sm">Save QR as Image</button>
+                        <button id="copyLinkBtn" class="btn btn-outline-primary btn-sm">Copy Link</button>
+                    </div>
+                    <div class="mt-2 small text-muted">Link will be served by file.io (auto-expiring per file.io policy).</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <!-- jsPDF + html2canvas for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-  <!-- DOCX (generate) -->
-  <script src="https://cdn.jsdelivr.net/npm/docx@8.2.4/build/index.js"></script>
-  <!-- HTML -> DOCX (preserve formatting) -->
-  <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-  <!-- Quill -->
-  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.2.4/build/index.js"></script>
+    <script src="https://unpkg.com/html-docx-js/dist/html-docx.js"></script>
 
-  <!-- DOCX (read) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.min.js"></script>
 
-  <!-- PDF.js (read) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
-  <!-- QR libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="practice.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+    // Existing code for other features...
+    
+    // Add event listeners for the new Tools
+    const sidebarButtons = document.querySelectorAll('#sidebar-wrapper button');
+    sidebarButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const section = button.dataset.section;
+            showSection(section);
+        });
+    });
+
+    // Image to PDF logic
+    const imageToPdfInput = document.getElementById('imageToPdfInput');
+    const imageToPdfPreview = document.getElementById('imageToPdfPreview');
+    const imageToPdfBtn = document.getElementById('imageToPdfBtn');
+    let imagesForPdf = [];
+
+    imageToPdfInput.addEventListener('change', (e) => {
+        imageToPdfPreview.innerHTML = '';
+        imagesForPdf = [];
+        if (e.target.files.length > 0) {
+            imageToPdfBtn.disabled = false;
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.className = 'img-thumbnail';
+                    img.style.width = '100px';
+                    img.style.height = '100px';
+                    imagesForPdf.push(event.target.result);
+                    imageToPdfPreview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            imageToPdfBtn.disabled = true;
+        }
+    });
+
+    imageToPdfBtn.addEventListener('click', () => {
+        if (imagesForPdf.length === 0) {
+            alert('Please select images first.');
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        imagesForPdf.forEach((imgData, index) => {
+            const img = new Image();
+            img.src = imgData;
+            
+            img.onload = function() {
+                const imgWidth = img.width;
+                const imgHeight = img.height;
+                const docWidth = doc.internal.pageSize.getWidth();
+                const docHeight = doc.internal.pageSize.getHeight();
+                
+                const ratio = Math.min(docWidth / imgWidth, docHeight / imgHeight);
+                const newWidth = imgWidth * ratio;
+                const newHeight = imgHeight * ratio;
+                
+                const x = (docWidth - newWidth) / 2;
+                const y = (docHeight - newHeight) / 2;
+                
+                if (index > 0) {
+                    doc.addPage();
+                }
+                doc.addImage(imgData, 'JPEG', x, y, newWidth, newHeight);
+                
+                if (index === imagesForPdf.length - 1) {
+                    doc.save('images.pdf');
+                }
+            };
+        });
+    });
+
+    // DOCX to PDF logic
+    const docxToPdfInput = document.getElementById('docxToPdfInput');
+    const docxToPdfBtn = document.getElementById('docxToPdfBtn');
+
+    docxToPdfInput.addEventListener('change', (e) => {
+        docxToPdfBtn.disabled = e.target.files.length === 0;
+    });
+
+    docxToPdfBtn.addEventListener('click', () => {
+        const file = docxToPdfInput.files[0];
+        if (!file) {
+            alert('Please select a DOCX file.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const arrayBuffer = e.target.result;
+            const doc = new jspdf.jsPDF();
+
+            try {
+                const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                const text = result.value;
+                
+                const margin = 10;
+                doc.setFontSize(12);
+                const textLines = doc.splitTextToSize(text, doc.internal.pageSize.getWidth() - 2 * margin);
+                doc.text(textLines, margin, margin);
+                
+                doc.save('document.pdf');
+            } catch (error) {
+                console.error('Error converting DOCX:', error);
+                alert('An error occurred during conversion. Please try again.');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // **Study Timer Logic**
+    const timerDisplay = document.getElementById('timerDisplay');
+    const minutesInput = document.getElementById('minutesInput');
+    const startTimerBtn = document.getElementById('startTimerBtn');
+    const pauseTimerBtn = document.getElementById('pauseTimerBtn');
+    const resetTimerBtn = document.getElementById('resetTimerBtn');
+
+    let timerInterval;
+    let timeRemaining = 0;
+    let isPaused = false;
+
+    function updateDisplay() {
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        timerDisplay.textContent = formattedTime;
+    }
+
+    startTimerBtn.addEventListener('click', () => {
+        if (!isPaused) {
+            const minutes = parseInt(minutesInput.value, 10);
+            if (isNaN(minutes) || minutes <= 0) {
+                alert('Please enter a valid number of minutes.');
+                return;
+            }
+            timeRemaining = minutes * 60;
+        }
+        
+        timerInterval = setInterval(() => {
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                alert('Time’s up! Well done!');
+                startTimerBtn.disabled = false;
+                pauseTimerBtn.disabled = true;
+                resetTimerBtn.disabled = true;
+                isPaused = false;
+                updateDisplay();
+                return;
+            }
+            timeRemaining--;
+            updateDisplay();
+        }, 1000);
+
+        startTimerBtn.disabled = true;
+        pauseTimerBtn.disabled = false;
+        resetTimerBtn.disabled = false;
+        isPaused = false;
+    });
+
+    pauseTimerBtn.addEventListener('click', () => {
+        clearInterval(timerInterval);
+        isPaused = true;
+        startTimerBtn.disabled = false;
+        pauseTimerBtn.disabled = true;
+    });
+
+    resetTimerBtn.addEventListener('click', () => {
+        clearInterval(timerInterval);
+        const minutes = parseInt(minutesInput.value, 10);
+        timeRemaining = minutes * 60;
+        updateDisplay();
+        startTimerBtn.disabled = false;
+        pauseTimerBtn.disabled = true;
+        resetTimerBtn.disabled = true;
+        isPaused = false;
+    });
+
+    // Initial display update
+    updateDisplay();
+
+    // Existing showSection function (ensure this is in your main JS)
+    function showSection(sectionId) {
+        const sections = document.querySelectorAll('.content-section');
+        sections.forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(sectionId).classList.add('active');
+        
+        // Hide sidebar on mobile after selection
+        if (window.innerWidth < 768) {
+            document.getElementById('wrapper').classList.remove('toggled');
+        }
+    }
+});
+    </script>
   <script>
-    /* ---------------------------
+        /* ---------------------------
        Sidebar Toggle & Navigation (RESTORED)
     ---------------------------- */
     const wrapper = document.getElementById('wrapper');
@@ -327,9 +581,7 @@
         }
       }
     });
-  </script>
-
-  <script>
+    
     /* ---------------------------
        Quill Editor (Rich Text)
     ---------------------------- */
@@ -1063,13 +1315,80 @@
        QR and file.io helpers (already included above)
     ---------------------------- */
 
+// ... existing code ...
+
+// Assignment Planner Logic
+const assignmentNameInput = document.getElementById('assignmentName');
+const assignmentDueDateInput = document.getElementById('assignmentDueDate');
+const addAssignmentBtn = document.getElementById('addAssignmentBtn');
+const assignmentsList = document.getElementById('assignmentsList');
+
+let assignments = JSON.parse(localStorage.getItem('assignments')) || [];
+
+function saveAssignments() {
+    localStorage.setItem('assignments', JSON.stringify(assignments));
+    renderAssignments();
+}
+
+function renderAssignments() {
+    assignmentsList.innerHTML = '';
+    // Sort assignments by due date
+    assignments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+    if (assignments.length === 0) {
+        assignmentsList.innerHTML = '<p class="text-muted small">No assignments planned.</p>';
+        return;
+    }
+
+    assignments.forEach((assignment, index) => {
+        const item = document.createElement('div');
+        const dueDate = new Date(assignment.dueDate);
+        const today = new Date();
+        const isOverdue = dueDate < today;
+
+        item.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'py-2', 'border-bottom');
+        if (isOverdue) {
+            item.classList.add('text-danger');
+        }
+
+        item.innerHTML = `
+            <div>
+                <strong>${assignment.name}</strong>
+                <div class="text-muted small">Due: ${assignment.dueDate}</div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" data-index="${index}">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        assignmentsList.appendChild(item);
+    });
+}
+
+addAssignmentBtn.addEventListener('click', () => {
+    const name = assignmentNameInput.value.trim();
+    const dueDate = assignmentDueDateInput.value;
+
+    if (name && dueDate) {
+        assignments.push({ name, dueDate });
+        saveAssignments();
+        assignmentNameInput.value = '';
+        assignmentDueDateInput.value = '';
+    } else {
+        alert('Please enter both assignment name and due date.');
+    }
+});
+
+assignmentsList.addEventListener('click', (e) => {
+    if (e.target.closest('.btn-outline-danger')) {
+        const index = e.target.closest('.btn-outline-danger').dataset.index;
+        assignments.splice(index, 1);
+        saveAssignments();
+    }
+});
+
+// Initial render
+renderAssignments();
+
   </script>
-
-  <!-- Tesseract.js for OCR -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
-
-  <!-- Bootstrap bundle (for modal) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

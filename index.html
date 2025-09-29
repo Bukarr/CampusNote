@@ -675,6 +675,562 @@ const supabase = createClient(supabaseUrl, supabaseKey)
         const userInitials = document.getElementById('userInitials');
         const welcomeUser = document.getElementById('welcomeUser');
         
+        // ========== HELPER FUNCTIONS (DEFINE THESE FIRST) ==========
+        
+        // Format date function
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown date';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+
+        // Create note element
+        function createNoteElement(id, note) {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+                <div>
+                    <h6 class="mb-1">${note.title}</h6>
+                    <p class="mb-1 text-muted">${note.course} • ${formatDate(note.created_at)}</p>
+                    <p class="mb-0">${note.content ? note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '') : 'No content'}</p>
+                </div>
+                <div class="file-actions">
+                    ${note.file_url ? `<a href="${note.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            return div;
+        }
+
+        // Create assignment element
+        function createAssignmentElement(id, assignment) {
+            const dueDate = new Date(assignment.due_date);
+            const today = new Date();
+            const timeDiff = dueDate.getTime() - today.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            let statusClass = 'text-success';
+            let statusText = `${daysDiff} days remaining`;
+            
+            if (daysDiff < 0) {
+                statusClass = 'text-danger';
+                statusText = 'Overdue';
+            } else if (daysDiff === 0) {
+                statusClass = 'text-warning';
+                statusText = 'Due today';
+            } else if (daysDiff <= 3) {
+                statusClass = 'text-warning';
+            }
+            
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+                <div>
+                    <h6 class="mb-1">${assignment.title}</h6>
+                    <p class="mb-1 text-muted">${assignment.course} • Due: ${formatDate(assignment.due_date)}</p>
+                    <p class="mb-0">${assignment.description ? assignment.description.substring(0, 100) + (assignment.description.length > 100 ? '...' : '') : 'No description'}</p>
+                    <p class="mb-0 ${statusClass}"><small>${statusText}</small></p>
+                </div>
+                <div class="file-actions">
+                    ${assignment.file_url ? `<a href="${assignment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignment('${id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            return div;
+        }
+
+        // Create past question element
+        function createPastQuestionElement(id, pastQuestion) {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+                <div>
+                    <h6 class="mb-1">${pastQuestion.title}</h6>
+                    <p class="mb-1 text-muted">${pastQuestion.course} • ${pastQuestion.year} • ${formatDate(pastQuestion.created_at)}</p>
+                </div>
+                <div class="file-actions">
+                    <a href="${pastQuestion.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deletePastQuestion('${id}')"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            return div;
+        }
+
+        // ========== DATA LOADING FUNCTIONS ==========
+        
+        // Load notes - REAL FUNCTION
+        async function loadNotes(userId) {
+            const notesContent = document.getElementById('notesContent');
+            const notesList = document.getElementById('notesList');
+            
+            notesList.style.display = 'block';
+            notesContent.innerHTML = '';
+            
+            try {
+                const { data: notes, error } = await supabase
+                    .from('notes')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                notesList.style.display = 'none';
+                
+                if (!notes || notes.length === 0) {
+                    notesContent.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-sticky-note"></i>
+                            <h5>No Notes Yet</h5>
+                            <p>Start by adding your first note!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                notesContent.innerHTML = '';
+                notes.forEach(note => {
+                    const noteElement = createNoteElement(note.id, note);
+                    notesContent.appendChild(noteElement);
+                });
+            } catch (error) {
+                notesList.style.display = 'none';
+                notesContent.innerHTML = `<div class="alert alert-danger">Error loading notes: ${error.message}</div>`;
+            }
+        }
+
+        // Load assignments - REAL FUNCTION
+        async function loadAssignments(userId) {
+            const assignmentsContent = document.getElementById('assignmentsContent');
+            const assignmentsList = document.getElementById('assignmentsList');
+            
+            assignmentsList.style.display = 'block';
+            assignmentsContent.innerHTML = '';
+            
+            try {
+                const { data: assignments, error } = await supabase
+                    .from('assignments')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('due_date', { ascending: true });
+                
+                if (error) throw error;
+                
+                assignmentsList.style.display = 'none';
+                
+                if (!assignments || assignments.length === 0) {
+                    assignmentsContent.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-tasks"></i>
+                            <h5>No Assignments Yet</h5>
+                            <p>Add your first assignment to get started!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                assignmentsContent.innerHTML = '';
+                assignments.forEach(assignment => {
+                    const assignmentElement = createAssignmentElement(assignment.id, assignment);
+                    assignmentsContent.appendChild(assignmentElement);
+                });
+            } catch (error) {
+                assignmentsList.style.display = 'none';
+                assignmentsContent.innerHTML = `<div class="alert alert-danger">Error loading assignments: ${error.message}</div>`;
+            }
+        }
+
+        // Load past questions - REAL FUNCTION
+        async function loadPastQuestions(userId) {
+            const pastQuestionsContent = document.getElementById('pastQuestionsContent');
+            const pastQuestionsList = document.getElementById('pastQuestionsList');
+            
+            pastQuestionsList.style.display = 'block';
+            pastQuestionsContent.innerHTML = '';
+            
+            try {
+                const { data: pastQuestions, error } = await supabase
+                    .from('past_questions')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                pastQuestionsList.style.display = 'none';
+                
+                if (!pastQuestions || pastQuestions.length === 0) {
+                    pastQuestionsContent.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <h5>No Past Questions Yet</h5>
+                            <p>Add your first past question to get started!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                pastQuestionsContent.innerHTML = '';
+                pastQuestions.forEach(pastQuestion => {
+                    const pastQuestionElement = createPastQuestionElement(pastQuestion.id, pastQuestion);
+                    pastQuestionsContent.appendChild(pastQuestionElement);
+                });
+            } catch (error) {
+                pastQuestionsList.style.display = 'none';
+                pastQuestionsContent.innerHTML = `<div class="alert alert-danger">Error loading past questions: ${error.message}</div>`;
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboardData(userId) {
+            // Load recent notes
+            const recentNotesContent = document.getElementById('recentNotesContent');
+            const recentNotesList = document.getElementById('recentNotesList');
+            
+            recentNotesList.style.display = 'block';
+            recentNotesContent.innerHTML = '';
+            
+            try {
+                const { data: notes, error } = await supabase
+                    .from('notes')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+                
+                if (error) throw error;
+                
+                recentNotesList.style.display = 'none';
+                
+                if (!notes || notes.length === 0) {
+                    recentNotesContent.innerHTML = '<p class="text-muted">No notes yet. Add your first note!</p>';
+                    return;
+                }
+                
+                notes.forEach(note => {
+                    const noteElement = createNoteElement(note.id, note);
+                    recentNotesContent.appendChild(noteElement);
+                });
+            } catch (error) {
+                recentNotesList.style.display = 'none';
+                recentNotesContent.innerHTML = '<p class="text-muted">Error loading recent notes</p>';
+            }
+            
+            // Load upcoming assignments
+            const upcomingAssignmentsContent = document.getElementById('upcomingAssignmentsContent');
+            const upcomingAssignmentsList = document.getElementById('upcomingAssignmentsList');
+            
+            upcomingAssignmentsList.style.display = 'block';
+            upcomingAssignmentsContent.innerHTML = '';
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            try {
+                const { data: assignments, error } = await supabase
+                    .from('assignments')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .gte('due_date', today)
+                    .order('due_date', { ascending: true })
+                    .limit(3);
+                
+                if (error) throw error;
+                
+                upcomingAssignmentsList.style.display = 'none';
+                
+                if (!assignments || assignments.length === 0) {
+                    upcomingAssignmentsContent.innerHTML = '<p class="text-muted">No upcoming assignments. Great job!</p>';
+                    return;
+                }
+                
+                assignments.forEach(assignment => {
+                    const assignmentElement = createAssignmentElement(assignment.id, assignment);
+                    upcomingAssignmentsContent.appendChild(assignmentElement);
+                });
+            } catch (error) {
+                upcomingAssignmentsList.style.display = 'none';
+                upcomingAssignmentsContent.innerHTML = '<p class="text-muted">Error loading upcoming assignments</p>';
+            }
+            
+            // Load user contribution counts
+            try {
+                const [notesCount, assignmentsCount, pastQuestionsCount] = await Promise.all([
+                    supabase.from('notes').select('id', { count: 'exact' }).eq('user_id', userId),
+                    supabase.from('assignments').select('id', { count: 'exact' }).eq('user_id', userId),
+                    supabase.from('past_questions').select('id', { count: 'exact' }).eq('user_id', userId)
+                ]);
+                
+                document.getElementById('myNotesCount').textContent = notesCount.count || 0;
+                document.getElementById('myAssignmentsCount').textContent = assignmentsCount.count || 0;
+                document.getElementById('myPastQuestionsCount').textContent = pastQuestionsCount.count || 0;
+            } catch (error) {
+                console.error('Error loading counts:', error);
+            }
+        }
+
+        // ========== DELETE FUNCTIONS ==========
+        
+        // Delete functions
+        async function deleteNote(id) {
+            if (confirm('Are you sure you want to delete this note?')) {
+                try {
+                    const { error } = await supabase
+                        .from('notes')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    // Reload notes for current user
+                    const user = (await supabase.auth.getUser()).data.user;
+                    if (user) loadNotes(user.id);
+                } catch (error) {
+                    alert('Error deleting note: ' + error.message);
+                }
+            }
+        }
+
+        async function deleteAssignment(id) {
+            if (confirm('Are you sure you want to delete this assignment?')) {
+                try {
+                    const { error } = await supabase
+                        .from('assignments')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    // Reload assignments for current user
+                    const user = (await supabase.auth.getUser()).data.user;
+                    if (user) loadAssignments(user.id);
+                } catch (error) {
+                    alert('Error deleting assignment: ' + error.message);
+                }
+            }
+        }
+
+        async function deletePastQuestion(id) {
+            if (confirm('Are you sure you want to delete this past question?')) {
+                try {
+                    const { error } = await supabase
+                        .from('past_questions')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    // Reload past questions for current user
+                    const user = (await supabase.auth.getUser()).data.user;
+                    if (user) loadPastQuestions(user.id);
+                } catch (error) {
+                    alert('Error deleting past question: ' + error.message);
+                }
+            }
+        }
+
+        // ========== SAVE FUNCTIONS ==========
+        
+        // Save note - REAL FUNCTION
+        document.getElementById('saveNoteBtn').addEventListener('click', async () => {
+            const user = (await supabase.auth.getUser()).data.user;
+            if (!user) {
+                alert('Please log in to save notes');
+                return;
+            }
+            
+            const title = document.getElementById('noteTitle').value;
+            const course = document.getElementById('noteCourse').value;
+            const content = document.getElementById('noteContent').value;
+            const file = document.getElementById('noteFile').files[0];
+            
+            // Basic validation
+            if (!title || !course || !content) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const noteData = {
+                user_id: user.id,
+                title: title,
+                course: course,
+                content: content
+            };
+            
+            try {
+                if (file) {
+                    // Upload file to Supabase Storage
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('notes')
+                        .upload(fileName, file);
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    // Get public URL
+                    const { data: urlData } = supabase.storage
+                        .from('notes')
+                        .getPublicUrl(fileName);
+                    
+                    noteData.file_url = urlData.publicUrl;
+                }
+                
+                // Save note to database
+                const { error } = await supabase
+                    .from('notes')
+                    .insert([noteData]);
+                
+                if (error) throw error;
+                
+                // Reset form and close modal
+                document.getElementById('addNoteForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
+                
+                // Show success message
+                alert('Note saved successfully!');
+                
+                // Reload notes
+                loadNotes(user.id);
+            } catch (error) {
+                alert('Error saving note: ' + error.message);
+            }
+        });
+
+        // Save assignment - REAL FUNCTION
+        document.getElementById('saveAssignmentBtn').addEventListener('click', async () => {
+            const user = (await supabase.auth.getUser()).data.user;
+            if (!user) {
+                alert('Please log in to save assignments');
+                return;
+            }
+            
+            const title = document.getElementById('assignmentTitle').value;
+            const course = document.getElementById('assignmentCourse').value;
+            const description = document.getElementById('assignmentDescription').value;
+            const dueDate = document.getElementById('assignmentDueDate').value;
+            const file = document.getElementById('assignmentFile').files[0];
+            
+            // Basic validation
+            if (!title || !course || !description || !dueDate) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const assignmentData = {
+                user_id: user.id,
+                title: title,
+                course: course,
+                description: description,
+                due_date: dueDate
+            };
+            
+            try {
+                if (file) {
+                    // Upload file to Supabase Storage
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('assignments')
+                        .upload(fileName, file);
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    // Get public URL
+                    const { data: urlData } = supabase.storage
+                        .from('assignments')
+                        .getPublicUrl(fileName);
+                    
+                    assignmentData.file_url = urlData.publicUrl;
+                }
+                
+                // Save assignment to database
+                const { error } = await supabase
+                    .from('assignments')
+                    .insert([assignmentData]);
+                
+                if (error) throw error;
+                
+                // Reset form and close modal
+                document.getElementById('addAssignmentForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal')).hide();
+                
+                // Show success message
+                alert('Assignment saved successfully!');
+                
+                // Reload assignments
+                loadAssignments(user.id);
+            } catch (error) {
+                alert('Error saving assignment: ' + error.message);
+            }
+        });
+
+        // Save past question - REAL FUNCTION
+        document.getElementById('savePastQuestionBtn').addEventListener('click', async () => {
+            const user = (await supabase.auth.getUser()).data.user;
+            if (!user) {
+                alert('Please log in to save past questions');
+                return;
+            }
+            
+            const title = document.getElementById('pastQuestionTitle').value;
+            const course = document.getElementById('pastQuestionCourse').value;
+            const year = document.getElementById('pastQuestionYear').value;
+            const file = document.getElementById('pastQuestionFile').files[0];
+            
+            // Basic validation
+            if (!title || !course || !year || !file) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                // Upload file to Supabase Storage
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('past-questions')
+                    .upload(fileName, file);
+                
+                if (uploadError) throw uploadError;
+                
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from('past-questions')
+                    .getPublicUrl(fileName);
+                
+                // Save past question to database
+                const { error } = await supabase
+                    .from('past_questions')
+                    .insert([{
+                        user_id: user.id,
+                        title: title,
+                        course: course,
+                        year: year,
+                        file_url: urlData.publicUrl
+                    }]);
+                
+                if (error) throw error;
+                
+                // Reset form and close modal
+                document.getElementById('addPastQuestionForm').reset();
+                bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal')).hide();
+                
+                // Show success message
+                alert('Past question saved successfully!');
+                
+                // Reload past questions
+                loadPastQuestions(user.id);
+            } catch (error) {
+                alert('Error saving past question: ' + error.message);
+            }
+        });
+
+        // ========== AUTH AND NAVIGATION FUNCTIONS ==========
+        
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             console.log('CampusNote app initialized');
@@ -959,88 +1515,6 @@ const supabase = createClient(supabaseUrl, supabaseKey)
             document.getElementById('editLevel').value = level;
             document.getElementById('editDepartment').value = department;
         }
-            // Format date function
-        function formatDate(dateString) {
-            if (!dateString) return 'Unknown date';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-            });
-        }
-
-        // Create note element
-        function createNoteElement(id, note) {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div>
-                    <h6 class="mb-1">${note.title}</h6>
-                    <p class="mb-1 text-muted">${note.course} • ${formatDate(note.created_at)}</p>
-                    <p class="mb-0">${note.content ? note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '') : 'No content'}</p>
-                </div>
-                <div class="file-actions">
-                    ${note.file_url ? `<a href="${note.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            return div;
-        }
-
-        // Create assignment element
-        function createAssignmentElement(id, assignment) {
-            const dueDate = new Date(assignment.due_date);
-            const today = new Date();
-            const timeDiff = dueDate.getTime() - today.getTime();
-            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            
-            let statusClass = 'text-success';
-            let statusText = `${daysDiff} days remaining`;
-            
-            if (daysDiff < 0) {
-                statusClass = 'text-danger';
-                statusText = 'Overdue';
-            } else if (daysDiff === 0) {
-                statusClass = 'text-warning';
-                statusText = 'Due today';
-            } else if (daysDiff <= 3) {
-                statusClass = 'text-warning';
-            }
-            
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div>
-                    <h6 class="mb-1">${assignment.title}</h6>
-                    <p class="mb-1 text-muted">${assignment.course} • Due: ${formatDate(assignment.due_date)}</p>
-                    <p class="mb-0">${assignment.description ? assignment.description.substring(0, 100) + (assignment.description.length > 100 ? '...' : '') : 'No description'}</p>
-                    <p class="mb-0 ${statusClass}"><small>${statusText}</small></p>
-                </div>
-                <div class="file-actions">
-                    ${assignment.file_url ? `<a href="${assignment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignment('${id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            return div;
-        }
-
-        // Create past question element
-        function createPastQuestionElement(id, pastQuestion) {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div>
-                    <h6 class="mb-1">${pastQuestion.title}</h6>
-                    <p class="mb-1 text-muted">${pastQuestion.course} • ${pastQuestion.year} • ${formatDate(pastQuestion.created_at)}</p>
-                </div>
-                <div class="file-actions">
-                    <a href="${pastQuestion.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deletePastQuestion('${id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            return div;
-        }
 
         // Load user content from Supabase
         function loadUserContent(userId) {
@@ -1050,199 +1524,42 @@ const supabase = createClient(supabaseUrl, supabaseKey)
             loadDashboardData(userId);
         }
 
-        // Load notes - REAL FUNCTION
-async function loadNotes(userId) {
-    const notesContent = document.getElementById('notesContent');
-    const notesList = document.getElementById('notesList');
-    
-    notesList.style.display = 'block';
-    notesContent.innerHTML = '';
-    
-    try {
-        const { data: notes, error } = await supabase
-            .from('notes')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        notesList.style.display = 'none';
-        
-        if (!notes || notes.length === 0) {
-            notesContent.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-sticky-note"></i>
-                    <h5>No Notes Yet</h5>
-                    <p>Start by adding your first note!</p>
-                </div>
-            `;
-            return;
-        }
-        
-        notesContent.innerHTML = '';
-        notes.forEach(note => {
-            const noteElement = createNoteElement(note.id, note);
-            notesContent.appendChild(noteElement);
-        });
-    } catch (error) {
-        notesList.style.display = 'none';
-        notesContent.innerHTML = `<div class="alert alert-danger">Error loading notes: ${error.message}</div>`;
-    }
-}
-
-// Load assignments - REAL FUNCTION
-async function loadAssignments(userId) {
-    const assignmentsContent = document.getElementById('assignmentsContent');
-    const assignmentsList = document.getElementById('assignmentsList');
-    
-    assignmentsList.style.display = 'block';
-    assignmentsContent.innerHTML = '';
-    
-    try {
-        const { data: assignments, error } = await supabase
-            .from('assignments')
-            .select('*')
-            .eq('user_id', userId)
-            .order('due_date', { ascending: true });
-        
-        if (error) throw error;
-        
-        assignmentsList.style.display = 'none';
-        
-        if (!assignments || assignments.length === 0) {
-            assignmentsContent.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-tasks"></i>
-                    <h5>No Assignments Yet</h5>
-                    <p>Add your first assignment to get started!</p>
-                </div>
-            `;
-            return;
-        }
-        
-        assignmentsContent.innerHTML = '';
-        assignments.forEach(assignment => {
-            const assignmentElement = createAssignmentElement(assignment.id, assignment);
-            assignmentsContent.appendChild(assignmentElement);
-        });
-    } catch (error) {
-        assignmentsList.style.display = 'none';
-        assignmentsContent.innerHTML = `<div class="alert alert-danger">Error loading assignments: ${error.message}</div>`;
-    }
-}
-
-// Load past questions - REAL FUNCTION
-async function loadPastQuestions(userId) {
-    const pastQuestionsContent = document.getElementById('pastQuestionsContent');
-    const pastQuestionsList = document.getElementById('pastQuestionsList');
-    
-    pastQuestionsList.style.display = 'block';
-    pastQuestionsContent.innerHTML = '';
-    
-    try {
-        const { data: pastQuestions, error } = await supabase
-            .from('past_questions')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        pastQuestionsList.style.display = 'none';
-        
-        if (!pastQuestions || pastQuestions.length === 0) {
-            pastQuestionsContent.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-file-alt"></i>
-                    <h5>No Past Questions Yet</h5>
-                    <p>Add your first past question to get started!</p>
-                </div>
-            `;
-            return;
-        }
-        
-        pastQuestionsContent.innerHTML = '';
-        pastQuestions.forEach(pastQuestion => {
-            const pastQuestionElement = createPastQuestionElement(pastQuestion.id, pastQuestion);
-            pastQuestionsContent.appendChild(pastQuestionElement);
-        });
-    } catch (error) {
-        pastQuestionsList.style.display = 'none';
-        pastQuestionsContent.innerHTML = `<div class="alert alert-danger">Error loading past questions: ${error.message}</div>`;
-    }
-}
-
-        async function loadDashboardData(userId) {
-            const recentNotesContent = document.getElementById('recentNotesContent');
-            const upcomingAssignmentsContent = document.getElementById('upcomingAssignmentsContent');
+        // Profile form submission
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = (await supabase.auth.getUser()).data.user;
+            if (!user) return;
             
-            recentNotesContent.innerHTML = '<p class="text-muted">No notes yet. Add your first note!</p>';
-            upcomingAssignmentsContent.innerHTML = '<p class="text-muted">No upcoming assignments. Great job!</p>';
+            const name = document.getElementById('editName').value;
+            const level = document.getElementById('editLevel').value;
+            const department = document.getElementById('editDepartment').value;
             
-            document.getElementById('myNotesCount').textContent = '0';
-            document.getElementById('myAssignmentsCount').textContent = '0';
-            document.getElementById('myPastQuestionsCount').textContent = '0';
-        }
+            try {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        full_name: name,
+                        academic_level: level,
+                        department: department,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id);
+                
+                if (error) throw error;
+                
+                // Update UI with new user info
+                displayUserInfo({ 
+                    full_name: name, 
+                    academic_level: level, 
+                    department: department, 
+                    email: user.email 
+                });
+                alert('Profile updated successfully!');
+            } catch (error) {
+                alert('Error updating profile: ' + error.message);
+            }
+        });
 
-        
-    </script>
-    <script>
-        // PWA Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(registration => {
-        console.log('SW registered: ', registration);
-      })
-      .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
-      });
-  });
-}
-
-// Install prompt handling
-let deferredPrompt;
-const installButton = document.createElement('button');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevent the mini-infobar from appearing on mobile
-  e.preventDefault();
-  // Stash the event so it can be triggered later
-  deferredPrompt = e;
-  // Show install button (optional)
-  showInstallPromotion();
-});
-
-function showInstallPromotion() {
-  installButton.textContent = 'Install CampusNote';
-  installButton.className = 'btn btn-success position-fixed';
-  installButton.style.bottom = '20px';
-  installButton.style.right = '20px';
-  installButton.style.zIndex = '1000';
-  
-  installButton.addEventListener('click', async () => {
-    // Hide the app provided install promotion
-    installButton.style.display = 'none';
-    // Show the install prompt
-    deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    // We've used the prompt, and can't use it again, discard it
-    deferredPrompt = null;
-  });
-  
-  document.body.appendChild(installButton);
-}
-
-window.addEventListener('appinstalled', () => {
-  // Hide the app-provided install promotion
-  installButton.style.display = 'none';
-  // Clear the deferredPrompt so it can be garbage collected
-  deferredPrompt = null;
-  console.log('PWA was installed');
-});
     </script>
 </body>
 </html>

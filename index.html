@@ -821,7 +821,7 @@ function createSharedNoteElement(id, note) {
         <div class="file-actions">
             ${note.file_url ? `<a href="${note.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
             <!-- Only show delete button if it's the user's own note -->
-            ${note.user_id === (await supabase.auth.getUser()).data.user?.id ? 
+            ${note.user_id === (supabase.auth.getUser()).data.user?.id ? 
                 `<button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${id}')"><i class="fas fa-trash"></i></button>` : 
                 ''
             }

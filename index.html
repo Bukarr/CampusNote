@@ -1090,15 +1090,6 @@ async function loadPastQuestions(userId) {
         pastQuestionsContent.innerHTML = `<div class="alert alert-danger">Error loading past questions: ${error.message}</div>`;
     }
 }
-        async function loadAssignments(userId) {
-            const assignmentsContent = document.getElementById('assignmentsContent');
-            assignmentsContent.innerHTML = '<div class="alert alert-info">Assignments will load after database setup</div>';
-        }
-
-        async function loadPastQuestions(userId) {
-            const pastQuestionsContent = document.getElementById('pastQuestionsContent');
-            pastQuestionsContent.innerHTML = '<div class="alert alert-info">Past questions will load after database setup</div>';
-        }
 
         async function loadDashboardData(userId) {
             const recentNotesContent = document.getElementById('recentNotesContent');

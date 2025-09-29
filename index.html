@@ -968,12 +968,128 @@ const supabase = createClient(supabaseUrl, supabaseKey)
             loadDashboardData(userId);
         }
 
-        // Basic data loading functions
-        async function loadNotes(userId) {
-            const notesContent = document.getElementById('notesContent');
-            notesContent.innerHTML = '<div class="alert alert-info">Notes will load after database setup</div>';
+        // Load notes - REAL FUNCTION
+async function loadNotes(userId) {
+    const notesContent = document.getElementById('notesContent');
+    const notesList = document.getElementById('notesList');
+    
+    notesList.style.display = 'block';
+    notesContent.innerHTML = '';
+    
+    try {
+        const { data: notes, error } = await supabase
+            .from('notes')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        notesList.style.display = 'none';
+        
+        if (!notes || notes.length === 0) {
+            notesContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-sticky-note"></i>
+                    <h5>No Notes Yet</h5>
+                    <p>Start by adding your first note!</p>
+                </div>
+            `;
+            return;
         }
+        
+        notesContent.innerHTML = '';
+        notes.forEach(note => {
+            const noteElement = createNoteElement(note.id, note);
+            notesContent.appendChild(noteElement);
+        });
+    } catch (error) {
+        notesList.style.display = 'none';
+        notesContent.innerHTML = `<div class="alert alert-danger">Error loading notes: ${error.message}</div>`;
+    }
+}
 
+// Load assignments - REAL FUNCTION
+async function loadAssignments(userId) {
+    const assignmentsContent = document.getElementById('assignmentsContent');
+    const assignmentsList = document.getElementById('assignmentsList');
+    
+    assignmentsList.style.display = 'block';
+    assignmentsContent.innerHTML = '';
+    
+    try {
+        const { data: assignments, error } = await supabase
+            .from('assignments')
+            .select('*')
+            .eq('user_id', userId)
+            .order('due_date', { ascending: true });
+        
+        if (error) throw error;
+        
+        assignmentsList.style.display = 'none';
+        
+        if (!assignments || assignments.length === 0) {
+            assignmentsContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-tasks"></i>
+                    <h5>No Assignments Yet</h5>
+                    <p>Add your first assignment to get started!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        assignmentsContent.innerHTML = '';
+        assignments.forEach(assignment => {
+            const assignmentElement = createAssignmentElement(assignment.id, assignment);
+            assignmentsContent.appendChild(assignmentElement);
+        });
+    } catch (error) {
+        assignmentsList.style.display = 'none';
+        assignmentsContent.innerHTML = `<div class="alert alert-danger">Error loading assignments: ${error.message}</div>`;
+    }
+}
+
+// Load past questions - REAL FUNCTION
+async function loadPastQuestions(userId) {
+    const pastQuestionsContent = document.getElementById('pastQuestionsContent');
+    const pastQuestionsList = document.getElementById('pastQuestionsList');
+    
+    pastQuestionsList.style.display = 'block';
+    pastQuestionsContent.innerHTML = '';
+    
+    try {
+        const { data: pastQuestions, error } = await supabase
+            .from('past_questions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        pastQuestionsList.style.display = 'none';
+        
+        if (!pastQuestions || pastQuestions.length === 0) {
+            pastQuestionsContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h5>No Past Questions Yet</h5>
+                    <p>Add your first past question to get started!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        pastQuestionsContent.innerHTML = '';
+        pastQuestions.forEach(pastQuestion => {
+            const pastQuestionElement = createPastQuestionElement(pastQuestion.id, pastQuestion);
+            pastQuestionsContent.appendChild(pastQuestionElement);
+        });
+    } catch (error) {
+        pastQuestionsList.style.display = 'none';
+        pastQuestionsContent.innerHTML = `<div class="alert alert-danger">Error loading past questions: ${error.message}</div>`;
+    }
+}
         async function loadAssignments(userId) {
             const assignmentsContent = document.getElementById('assignmentsContent');
             assignmentsContent.innerHTML = '<div class="alert alert-info">Assignments will load after database setup</div>';
@@ -1007,19 +1123,200 @@ const supabase = createClient(supabaseUrl, supabaseKey)
             });
         }
 
-        // Add basic versions of save functions for testing
-        document.getElementById('saveNoteBtn').addEventListener('click', async () => {
-            alert('Note saving will work after database setup. Make sure to replace Supabase credentials and run the SQL setup.');
-        });
+   // Save note - REAL FUNCTION
+document.getElementById('saveNoteBtn').addEventListener('click', async () => {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+        alert('Please log in to save notes');
+        return;
+    }
+    
+    const title = document.getElementById('noteTitle').value;
+    const course = document.getElementById('noteCourse').value;
+    const content = document.getElementById('noteContent').value;
+    const file = document.getElementById('noteFile').files[0];
+    
+    // Basic validation
+    if (!title || !course || !content) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    const noteData = {
+        user_id: user.id,
+        title: title,
+        course: course,
+        content: content
+    };
+    
+    try {
+        if (file) {
+            // Upload file to Supabase Storage
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+                .from('notes')
+                .upload(fileName, file);
+            
+            if (uploadError) throw uploadError;
+            
+            // Get public URL
+            const { data: urlData } = supabase.storage
+                .from('notes')
+                .getPublicUrl(fileName);
+            
+            noteData.file_url = urlData.publicUrl;
+        }
+        
+        // Save note to database
+        const { error } = await supabase
+            .from('notes')
+            .insert([noteData]);
+        
+        if (error) throw error;
+        
+        // Reset form and close modal
+        document.getElementById('addNoteForm').reset();
+        bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
+        
+        // Show success message
+        alert('Note saved successfully!');
+        
+        // Reload notes
+        loadNotes(user.id);
+    } catch (error) {
+        alert('Error saving note: ' + error.message);
+    }
+});
 
-        document.getElementById('saveAssignmentBtn').addEventListener('click', async () => {
-            alert('Assignment saving will work after database setup. Make sure to replace Supabase credentials and run the SQL setup.');
-        });
+        // Save assignment - REAL FUNCTION
+document.getElementById('saveAssignmentBtn').addEventListener('click', async () => {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+        alert('Please log in to save assignments');
+        return;
+    }
+    
+    const title = document.getElementById('assignmentTitle').value;
+    const course = document.getElementById('assignmentCourse').value;
+    const description = document.getElementById('assignmentDescription').value;
+    const dueDate = document.getElementById('assignmentDueDate').value;
+    const file = document.getElementById('assignmentFile').files[0];
+    
+    // Basic validation
+    if (!title || !course || !description || !dueDate) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    const assignmentData = {
+        user_id: user.id,
+        title: title,
+        course: course,
+        description: description,
+        due_date: dueDate
+    };
+    
+    try {
+        if (file) {
+            // Upload file to Supabase Storage
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+                .from('assignments')
+                .upload(fileName, file);
+            
+            if (uploadError) throw uploadError;
+            
+            // Get public URL
+            const { data: urlData } = supabase.storage
+                .from('assignments')
+                .getPublicUrl(fileName);
+            
+            assignmentData.file_url = urlData.publicUrl;
+        }
+        
+        // Save assignment to database
+        const { error } = await supabase
+            .from('assignments')
+            .insert([assignmentData]);
+        
+        if (error) throw error;
+        
+        // Reset form and close modal
+        document.getElementById('addAssignmentForm').reset();
+        bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal')).hide();
+        
+        // Show success message
+        alert('Assignment saved successfully!');
+        
+        // Reload assignments
+        loadAssignments(user.id);
+    } catch (error) {
+        alert('Error saving assignment: ' + error.message);
+    }
+});
 
-        document.getElementById('savePastQuestionBtn').addEventListener('click', async () => {
-            alert('Past question saving will work after database setup. Make sure to replace Supabase credentials and run the SQL setup.');
-        });
-
+        // Save past question - REAL FUNCTION
+document.getElementById('savePastQuestionBtn').addEventListener('click', async () => {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+        alert('Please log in to save past questions');
+        return;
+    }
+    
+    const title = document.getElementById('pastQuestionTitle').value;
+    const course = document.getElementById('pastQuestionCourse').value;
+    const year = document.getElementById('pastQuestionYear').value;
+    const file = document.getElementById('pastQuestionFile').files[0];
+    
+    // Basic validation
+    if (!title || !course || !year || !file) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        // Upload file to Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+            .from('past-questions')
+            .upload(fileName, file);
+        
+        if (uploadError) throw uploadError;
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('past-questions')
+            .getPublicUrl(fileName);
+        
+        // Save past question to database
+        const { error } = await supabase
+            .from('past_questions')
+            .insert([{
+                user_id: user.id,
+                title: title,
+                course: course,
+                year: year,
+                file_url: urlData.publicUrl
+            }]);
+        
+        if (error) throw error;
+        
+        // Reset form and close modal
+        document.getElementById('addPastQuestionForm').reset();
+        bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal')).hide();
+        
+        // Show success message
+        alert('Past question saved successfully!');
+        
+        // Reload past questions
+        loadPastQuestions(user.id);
+    } catch (error) {
+        alert('Error saving past question: ' + error.message);
+    }
+});
         // Test function to verify everything is working
         window.testApp = function() {
             console.log('=== CampusNote Test ===');

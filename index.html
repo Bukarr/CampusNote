@@ -762,47 +762,73 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
         // ========== DATA LOADING FUNCTIONS ==========
         
-        // Load notes - REAL FUNCTION
-        async function loadNotes(userId) {
-            const notesContent = document.getElementById('notesContent');
-            const notesList = document.getElementById('notesList');
-            
-            notesList.style.display = 'block';
-            notesContent.innerHTML = '';
-            
-            try {
-                const { data: notes, error } = await supabase
-                    .from('notes')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                notesList.style.display = 'none';
-                
-                if (!notes || notes.length === 0) {
-                    notesContent.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-sticky-note"></i>
-                            <h5>No Notes Yet</h5>
-                            <p>Start by adding your first note!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                notesContent.innerHTML = '';
-                notes.forEach(note => {
-                    const noteElement = createNoteElement(note.id, note);
-                    notesContent.appendChild(noteElement);
-                });
-            } catch (error) {
-                notesList.style.display = 'none';
-                notesContent.innerHTML = `<div class="alert alert-danger">Error loading notes: ${error.message}</div>`;
-            }
+        // Load notes
+async function loadNotes() {
+    const notesContent = document.getElementById('notesContent');
+    const notesList = document.getElementById('notesList');
+    
+    notesList.style.display = 'block';
+    notesContent.innerHTML = '';
+    
+    try {
+        const { data: notes, error } = await supabase
+            .from('notes')
+            .select('*, profiles(full_name, department)')  // Join with profiles to get user info
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        notesList.style.display = 'none';
+        
+        if (!notes || notes.length === 0) {
+            notesContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-sticky-note"></i>
+                    <h5>No Notes Yet</h5>
+                    <p>Start by adding your first note!</p>
+                </div>
+            `;
+            return;
         }
+        
+        notesContent.innerHTML = '';
+        notes.forEach(note => {
+            const noteElement = createSharedNoteElement(note.id, note);
+            notesContent.appendChild(noteElement);
+        });
+    } catch (error) {
+        notesList.style.display = 'none';
+        notesContent.innerHTML = `<div class="alert alert-danger">Error loading notes: ${error.message}</div>`;
+    }
+}
 
+// Create shared note element (shows who uploaded it)
+function createSharedNoteElement(id, note) {
+    const userName = note.profiles?.full_name || 'Unknown User';
+    const userDepartment = note.profiles?.department || 'Unknown Department';
+    
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `
+        <div>
+            <h6 class="mb-1">${note.title}</h6>
+            <p class="mb-1 text-muted">
+                ${note.course} • ${formatDate(note.created_at)}<br>
+                <small>Uploaded by: ${userName} (${userDepartment})</small>
+            </p>
+            <p class="mb-0">${note.content ? note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '') : 'No content'}</p>
+        </div>
+        <div class="file-actions">
+            ${note.file_url ? `<a href="${note.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
+            <!-- Only show delete button if it's the user's own note -->
+            ${note.user_id === (await supabase.auth.getUser()).data.user?.id ? 
+                `<button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${id}')"><i class="fas fa-trash"></i></button>` : 
+                ''
+            }
+        </div>
+    `;
+    return div;
+}
         // Load assignments - REAL FUNCTION
         async function loadAssignments(userId) {
             const assignmentsContent = document.getElementById('assignmentsContent');
@@ -1034,32 +1060,39 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
         // ========== SAVE FUNCTIONS ==========
         
-        // Save note - REAL FUNCTION
-        document.getElementById('saveNoteBtn').addEventListener('click', async () => {
-            const user = (await supabase.auth.getUser()).data.user;
-            if (!user) {
-                alert('Please log in to save notes');
-                return;
-            }
-            
-            const title = document.getElementById('noteTitle').value;
-            const course = document.getElementById('noteCourse').value;
-            const content = document.getElementById('noteContent').value;
-            const file = document.getElementById('noteFile').files[0];
-            
-            // Basic validation
-            if (!title || !course || !content) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            const noteData = {
-                user_id: user.id,
-                title: title,
-                course: course,
-                content: content
-            };
-            
+        // Save note - SHARED VERSION
+document.getElementById('saveNoteBtn').addEventListener('click', async () => {
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+        alert('Please log in to save notes');
+        return;
+    }
+    
+    // Get user's department from profile
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('department')
+        .eq('id', user.id)
+        .single();
+    
+    const title = document.getElementById('noteTitle').value;
+    const course = document.getElementById('noteCourse').value;
+    const content = document.getElementById('noteContent').value;
+    const file = document.getElementById('noteFile').files[0];
+    
+    // Basic validation
+    if (!title || !course || !content) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    const noteData = {
+        user_id: user.id,
+        user_department: profile?.department, // Add department for sharing
+        title: title,
+        course: course,
+        content: content
+    };    
             try {
                 if (file) {
                     // Upload file to Supabase Storage

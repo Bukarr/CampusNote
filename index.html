@@ -1069,82 +1069,7 @@ const supabase = createClient(supabaseUrl, supabaseKey)
             });
         }
 
-        function setupFileUploadHandlers() {
-            // Note files upload
-            const noteFilesInput = document.getElementById('noteFiles');
-            if (noteFilesInput) {
-                noteFilesInput.addEventListener('change', function(e) {
-                    handleFileUpload(e, 'noteFilesPreview');
-                });
-            }
-
-            // Assignment files upload
-            const assignmentFilesInput = document.getElementById('assignmentFiles');
-            if (assignmentFilesInput) {
-                assignmentFilesInput.addEventListener('change', function(e) {
-                    handleFileUpload(e, 'assignmentFilesPreview');
-                });
-            }
-
-            // Past question file upload
-            const pastQuestionFileInput = document.getElementById('pastQuestionFile');
-            if (pastQuestionFileInput) {
-                pastQuestionFileInput.addEventListener('change', function(e) {
-                    handleFileUpload(e, 'pastQuestionFilePreview', true);
-                });
-            }
-        }
-
-        function handleFileUpload(event, previewContainerId, singleFile = false) {
-            const files = event.target.files;
-            const previewContainer = document.getElementById(previewContainerId);
-            
-            if (!previewContainer) return;
-
-            if (singleFile && files.length > 1) {
-                alert('Please select only one file.');
-                event.target.value = '';
-                return;
-            }
-
-            previewContainer.innerHTML = '';
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                
-                // Check file size (10MB limit)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
-                    continue;
-                }
-
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-preview-item';
-                fileItem.innerHTML = `
-                    <span class="file-name">
-                        <i class="fas fa-file me-2"></i>${file.name}
-                    </span>
-                    <span class="file-remove" onclick="removeFile(this, '${event.target.id}')">
-                        <i class="fas fa-times"></i>
-                    </span>
-                `;
-                previewContainer.appendChild(fileItem);
-            }
-        }
-
-        function removeFile(element, inputId) {
-            const fileItem = element.closest('.file-preview-item');
-            fileItem.remove();
-            
-            // Clear the file input
-            const fileInput = document.getElementById(inputId);
-            if (fileInput) {
-                fileInput.value = '';
-            }
-        }
-
-        // Make removeFile available globally
-        window.removeFile = removeFile;
+        
 
         function setupMobileNavigation() {
             const authButtons = document.getElementById('authButtons');
@@ -2094,6 +2019,7 @@ async function saveNote() {
 }
 
 // Save new assignment with file upload
+// Enhanced version with validation
 async function saveAssignment() {
     const title = document.getElementById('assignmentTitle');
     const course = document.getElementById('assignmentCourse');
@@ -2102,6 +2028,19 @@ async function saveAssignment() {
     const assignmentFilesInput = document.getElementById('assignmentFiles');
     
     if (!title || !course || !description || !dueDate) return;
+    
+    // Validate required fields
+    if (!title.value.trim()) {
+        alert('Please enter an assignment title');
+        title.focus();
+        return;
+    }
+    
+    if (!course.value.trim()) {
+        alert('Please enter a course');
+        course.focus();
+        return;
+    }
     
     try {
         let fileData = null;
@@ -2112,13 +2051,16 @@ async function saveAssignment() {
             fileData = await uploadFileToStorage(file, 'assignments', currentUser.id);
         }
         
+        // FIX: Convert empty due_date to null
+        const dueDateValue = dueDate.value.trim() === '' ? null : dueDate.value;
+        
         const assignmentData = {
-            title: title.value,
-            course: course.value,
-            description: description.value,
-            due_date: dueDate.value,
+            title: title.value.trim(),
+            course: course.value.trim(),
+            description: description.value.trim(),
+            due_date: dueDateValue, // This will be null if empty
             user_id: currentUser.id,
-            created_at: new Date()
+            created_at: new Date().toISOString()
         };
         
         // Add file data if uploaded
@@ -2128,10 +2070,13 @@ async function saveAssignment() {
             assignmentData.file_type = fileData.type;
         }
         
+        console.log('📦 Saving assignment:', assignmentData);
+        
         const { error } = await supabase.from('assignments').insert([assignmentData]);
         
         if (error) throw error;
         
+        // Success - close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal'));
         if (modal) modal.hide();
         
@@ -2142,7 +2087,11 @@ async function saveAssignment() {
         const assignmentFilesPreview = document.getElementById('assignmentFilesPreview');
         if (assignmentFilesPreview) assignmentFilesPreview.innerHTML = '';
         
+        // Show success message
+        showNotification('Assignment saved successfully!');
+        
     } catch (error) {
+        console.error('❌ Error saving assignment:', error);
         alert('Error saving assignment: ' + error.message);
     }
 }

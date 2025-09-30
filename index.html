@@ -2039,113 +2039,165 @@ else if (sectionId === 'chat') {
             }
         }
 
-        // Data Creation Functions
-        async function saveNote() {
-            const title = document.getElementById('noteTitle');
-            const course = document.getElementById('noteCourse');
-            const content = document.getElementById('noteContent');
-            
-            if (!title || !course || !content) return;
-            
-            try {
-                const { error } = await supabase.from('notes').insert([{
-                    title: title.value,
-                    course: course.value,
-                    content: content.value,
-                    user_id: currentUser.id,
-                    created_at: new Date()
-                }]);
-                
-                if (error) throw error;
-                
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addNoteModal'));
-                if (modal) modal.hide();
-                
-                const addNoteForm = document.getElementById('addNoteForm');
-                if (addNoteForm) addNoteForm.reset();
-                
-                // Clear file preview
-                const noteFilesPreview = document.getElementById('noteFilesPreview');
-                if (noteFilesPreview) noteFilesPreview.innerHTML = '';
-                
-                // Real-time update will handle the refresh
-                
-            } catch (error) {
-                alert('Error saving note: ' + error.message);
-            }
+        // Save new note with file upload
+async function saveNote() {
+    const title = document.getElementById('noteTitle');
+    const course = document.getElementById('noteCourse');
+    const content = document.getElementById('noteContent');
+    const noteFilesInput = document.getElementById('noteFiles');
+    
+    if (!title || !course || !content) return;
+    
+    try {
+        let fileData = null;
+        
+        // Upload file if exists
+        if (noteFilesInput.files.length > 0) {
+            const file = noteFilesInput.files[0];
+            fileData = await uploadFileToStorage(file, 'notes', currentUser.id);
         }
+        
+        const noteData = {
+            title: title.value,
+            course: course.value,
+            content: content.value,
+            user_id: currentUser.id,
+            created_at: new Date()
+        };
+        
+        // Add file data if uploaded
+        if (fileData) {
+            noteData.file_url = fileData.url;
+            noteData.file_name = fileData.name;
+            noteData.file_type = fileData.type;
+        }
+        
+        const { error } = await supabase.from('notes').insert([noteData]);
+        
+        if (error) throw error;
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addNoteModal'));
+        if (modal) modal.hide();
+        
+        const addNoteForm = document.getElementById('addNoteForm');
+        if (addNoteForm) addNoteForm.reset();
+        
+        // Clear file preview
+        const noteFilesPreview = document.getElementById('noteFilesPreview');
+        if (noteFilesPreview) noteFilesPreview.innerHTML = '';
+        
+        // Real-time update will handle the refresh
+        
+    } catch (error) {
+        alert('Error saving note: ' + error.message);
+    }
+}
 
-        async function saveAssignment() {
-            const title = document.getElementById('assignmentTitle');
-            const course = document.getElementById('assignmentCourse');
-            const description = document.getElementById('assignmentDescription');
-            const dueDate = document.getElementById('assignmentDueDate');
-            
-            if (!title || !course || !description || !dueDate) return;
-            
-            try {
-                const { error } = await supabase.from('assignments').insert([{
-                    title: title.value,
-                    course: course.value,
-                    description: description.value,
-                    due_date: dueDate.value,
-                    user_id: currentUser.id,
-                    created_at: new Date()
-                }]);
-                
-                if (error) throw error;
-                
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal'));
-                if (modal) modal.hide();
-                
-                const addAssignmentForm = document.getElementById('addAssignmentForm');
-                if (addAssignmentForm) addAssignmentForm.reset();
-                
-                // Clear file preview
-                const assignmentFilesPreview = document.getElementById('assignmentFilesPreview');
-                if (assignmentFilesPreview) assignmentFilesPreview.innerHTML = '';
-                
-                // Real-time update will handle the refresh
-                
-            } catch (error) {
-                alert('Error saving assignment: ' + error.message);
-            }
+// Save new assignment with file upload
+async function saveAssignment() {
+    const title = document.getElementById('assignmentTitle');
+    const course = document.getElementById('assignmentCourse');
+    const description = document.getElementById('assignmentDescription');
+    const dueDate = document.getElementById('assignmentDueDate');
+    const assignmentFilesInput = document.getElementById('assignmentFiles');
+    
+    if (!title || !course || !description || !dueDate) return;
+    
+    try {
+        let fileData = null;
+        
+        // Upload file if exists
+        if (assignmentFilesInput.files.length > 0) {
+            const file = assignmentFilesInput.files[0];
+            fileData = await uploadFileToStorage(file, 'assignments', currentUser.id);
         }
+        
+        const assignmentData = {
+            title: title.value,
+            course: course.value,
+            description: description.value,
+            due_date: dueDate.value,
+            user_id: currentUser.id,
+            created_at: new Date()
+        };
+        
+        // Add file data if uploaded
+        if (fileData) {
+            assignmentData.file_url = fileData.url;
+            assignmentData.file_name = fileData.name;
+            assignmentData.file_type = fileData.type;
+        }
+        
+        const { error } = await supabase.from('assignments').insert([assignmentData]);
+        
+        if (error) throw error;
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal'));
+        if (modal) modal.hide();
+        
+        const addAssignmentForm = document.getElementById('addAssignmentForm');
+        if (addAssignmentForm) addAssignmentForm.reset();
+        
+        // Clear file preview
+        const assignmentFilesPreview = document.getElementById('assignmentFilesPreview');
+        if (assignmentFilesPreview) assignmentFilesPreview.innerHTML = '';
+        
+    } catch (error) {
+        alert('Error saving assignment: ' + error.message);
+    }
+}
 
-        async function savePastQuestion() {
-            const title = document.getElementById('pastQuestionTitle');
-            const course = document.getElementById('pastQuestionCourse');
-            const year = document.getElementById('pastQuestionYear');
-            
-            if (!title || !course || !year) return;
-            
-            try {
-                const { error } = await supabase.from('past_questions').insert([{
-                    title: title.value,
-                    course: course.value,
-                    year: year.value,
-                    user_id: currentUser.id,
-                    created_at: new Date()
-                }]);
-                
-                if (error) throw error;
-                
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal'));
-                if (modal) modal.hide();
-                
-                const addPastQuestionForm = document.getElementById('addPastQuestionForm');
-                if (addPastQuestionForm) addPastQuestionForm.reset();
-                
-                // Clear file preview
-                const pastQuestionFilePreview = document.getElementById('pastQuestionFilePreview');
-                if (pastQuestionFilePreview) pastQuestionFilePreview.innerHTML = '';
-                
-                // Real-time update will handle the refresh
-                
-            } catch (error) {
-                alert('Error saving past question: ' + error.message);
-            }
+// Save new past question with file upload
+async function savePastQuestion() {
+    const title = document.getElementById('pastQuestionTitle');
+    const course = document.getElementById('pastQuestionCourse');
+    const year = document.getElementById('pastQuestionYear');
+    const pastQuestionFileInput = document.getElementById('pastQuestionFile');
+    
+    if (!title || !course || !year) return;
+    
+    try {
+        let fileData = null;
+        
+        // Upload file if exists
+        if (pastQuestionFileInput.files.length > 0) {
+            const file = pastQuestionFileInput.files[0];
+            fileData = await uploadFileToStorage(file, 'past-questions', currentUser.id);
         }
+        
+        const pastQuestionData = {
+            title: title.value,
+            course: course.value,
+            year: year.value,
+            user_id: currentUser.id,
+            created_at: new Date()
+        };
+        
+        // Add file data if uploaded
+        if (fileData) {
+            pastQuestionData.file_url = fileData.url;
+            pastQuestionData.file_name = fileData.name;
+            pastQuestionData.file_type = fileData.type;
+        }
+        
+        const { error } = await supabase.from('past_questions').insert([pastQuestionData]);
+        
+        if (error) throw error;
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal'));
+        if (modal) modal.hide();
+        
+        const addPastQuestionForm = document.getElementById('addPastQuestionForm');
+        if (addPastQuestionForm) addPastQuestionForm.reset();
+        
+        // Clear file preview
+        const pastQuestionFilePreview = document.getElementById('pastQuestionFilePreview');
+        if (pastQuestionFilePreview) pastQuestionFilePreview.innerHTML = '';
+        
+    } catch (error) {
+        alert('Error saving past question: ' + error.message);
+    }
+}
 
         // Profile Management - FIXED: Remove updated_at field
         async function updateProfile(e) {
@@ -2274,6 +2326,257 @@ else if (sectionId === 'chat') {
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+        // ==================== FILE UPLOAD & PREVIEW FUNCTIONS ====================
+
+// File upload handlers
+function setupFileUploadHandlers() {
+    // Note files upload
+    const noteFilesInput = document.getElementById('noteFiles');
+    if (noteFilesInput) {
+        noteFilesInput.addEventListener('change', function(e) {
+            handleFileUpload(e, 'noteFilesPreview', 'notes');
+        });
+    }
+
+    // Assignment files upload
+    const assignmentFilesInput = document.getElementById('assignmentFiles');
+    if (assignmentFilesInput) {
+        assignmentFilesInput.addEventListener('change', function(e) {
+            handleFileUpload(e, 'assignmentFilesPreview', 'assignments');
+        });
+    }
+
+    // Past question file upload
+    const pastQuestionFileInput = document.getElementById('pastQuestionFile');
+    if (pastQuestionFileInput) {
+        pastQuestionFileInput.addEventListener('change', function(e) {
+            handleFileUpload(e, 'pastQuestionFilePreview', 'past-questions', true);
+        });
+    }
+}
+
+// Handle file upload with preview
+function handleFileUpload(event, previewContainerId, fileType, singleFile = false) {
+    const files = event.target.files;
+    const previewContainer = document.getElementById(previewContainerId);
+    
+    if (!previewContainer) return;
+
+    if (singleFile && files.length > 1) {
+        alert('Please select only one file.');
+        event.target.value = '';
+        return;
+    }
+
+    previewContainer.innerHTML = '';
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+            continue;
+        }
+
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-preview-item';
+        fileItem.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="file-info">
+                    <i class="fas ${getFileIcon(file.type)} me-2"></i>
+                    <span class="file-name">${file.name}</span>
+                    <small class="text-muted ms-2">(${formatFileSize(file.size)})</small>
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="previewFile(this, '${fileType}')" data-file="${file.name}" data-type="${file.type}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFile(this, '${event.target.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        fileItem.dataset.file = file;
+        previewContainer.appendChild(fileItem);
+    }
+}
+
+// Get file icon based on file type
+function getFileIcon(fileType) {
+    if (fileType.includes('pdf')) return 'fa-file-pdf';
+    if (fileType.includes('word') || fileType.includes('document')) return 'fa-file-word';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'fa-file-excel';
+    if (fileType.includes('image')) return 'fa-file-image';
+    if (fileType.includes('zip') || fileType.includes('rar')) return 'fa-file-archive';
+    return 'fa-file';
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Remove file from preview
+function removeFile(element, inputId) {
+    const fileItem = element.closest('.file-preview-item');
+    fileItem.remove();
+    
+    // Clear the file input
+    const fileInput = document.getElementById(inputId);
+    if (fileInput) {
+        fileInput.value = '';
+    }
+}
+
+// Preview file
+function previewFile(element, fileType) {
+    const fileItem = element.closest('.file-preview-item');
+    const file = fileItem.dataset.file;
+    
+    if (!file) {
+        alert('File not found');
+        return;
+    }
+
+    // Create preview modal
+    showFilePreviewModal(file, fileType);
+}
+
+// Show file preview modal
+function showFilePreviewModal(file, fileType) {
+    // Remove existing preview modal if any
+    const existingModal = document.getElementById('filePreviewModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modalHTML = `
+        <div class="modal fade" id="filePreviewModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">File Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div id="filePreviewContent">
+                            <p>Loading preview...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="downloadFile('${file.name}', '${fileType}')">
+                            <i class="fas fa-download me-2"></i>Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    const modal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+    modal.show();
+
+    // Load file preview based on file type
+    loadFilePreview(file, fileType);
+}
+
+// Load file preview based on file type
+function loadFilePreview(file, fileType) {
+    const previewContent = document.getElementById('filePreviewContent');
+    const reader = new FileReader();
+
+    if (file.type.includes('image')) {
+        // Image preview
+        reader.onload = function(e) {
+            previewContent.innerHTML = `
+                <img src="${e.target.result}" class="img-fluid" style="max-height: 70vh;" alt="${file.name}">
+                <p class="mt-3"><strong>${file.name}</strong></p>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else if (file.type.includes('pdf')) {
+        // PDF preview (using object tag)
+        reader.onload = function(e) {
+            previewContent.innerHTML = `
+                <object data="${e.target.result}" type="application/pdf" width="100%" height="600px">
+                    <p>Unable to display PDF file. <a href="${e.target.result}" download="${file.name}">Download instead</a></p>
+                </object>
+                <p class="mt-3"><strong>${file.name}</strong></p>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else if (file.type.includes('text')) {
+        // Text file preview
+        reader.onload = function(e) {
+            previewContent.innerHTML = `
+                <div class="text-start">
+                    <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">${e.target.result}</pre>
+                </div>
+                <p class="mt-3"><strong>${file.name}</strong></p>
+            `;
+        };
+        reader.readAsText(file);
+    } else {
+        // Unsupported file type
+        previewContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Preview not available for this file type.
+            </div>
+            <p><strong>${file.name}</strong></p>
+            <p class="text-muted">File type: ${file.type || 'Unknown'}</p>
+        `;
+    }
+}
+
+// Download file
+function downloadFile(fileName, fileType) {
+    // This will be used for downloaded files from server
+    alert(`Download functionality will be available after file is uploaded to ${fileType}`);
+}
+
+// Upload file to Supabase storage
+async function uploadFileToStorage(file, bucketName, folder = '') {
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${folder}/${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, file);
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+
+        return {
+            url: publicUrl,
+            name: file.name,
+            type: file.type
+        };
+
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        throw error;
+    }
+}
+
+// Make functions global
+window.removeFile = removeFile;
+window.previewFile = previewFile;
+window.downloadFile = downloadFile;
 
         // Sample Data Function
         window.addSampleData = async function() {

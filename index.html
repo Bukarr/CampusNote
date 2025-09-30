@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CampusNote - Student Academic Platform</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
+    <title>CampusNote - Academic Companion</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- PWA Manifest -->
 <link rel="manifest" href="manifest.json">
@@ -15,364 +13,794 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CampusNote">
 <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
+            --secondary-color: #3a0ca3;
+            --accent-color: #4cc9f0;
             --light-color: #f8f9fa;
             --dark-color: #212529;
+            --success-color: #4bb543;
+            --warning-color: #ffcc00;
+            --danger-color: #dc3545;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #f5f7fb;
-            color: var(--dark-color);
-            padding-top: 56px;
+            color: #333;
+            padding-bottom: 80px;
+            padding-top: 80px; /* Added padding for fixed navbar */
         }
         
+        /* Top Navigation */
         .navbar {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 12px 0;
         }
         
         .navbar-brand {
             font-weight: 700;
-            color: white !important;
+            font-size: 1.5rem;
         }
         
-        .nav-link {
-            color: rgba(255, 255, 255, 0.85) !important;
-            font-weight: 500;
-            transition: color 0.3s;
+        .navbar-brand i {
+            color: var(--accent-color);
         }
         
-        .nav-link:hover, .nav-link.active {
-            color: white !important;
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            z-index: 1000;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
         }
         
+        .bottom-nav-content {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .bottom-nav-item {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #6c757d;
+            padding: 5px 8px;
+            flex: 1;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .bottom-nav-item.active {
+            color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        .bottom-nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+        
+        /* Sections */
         .section {
             display: none;
-            padding: 20px 0;
+            padding: 20px 15px; /* Increased padding */
+            animation: fadeIn 0.3s ease;
+            margin-bottom: 30px; /* Added margin bottom */
         }
         
         .section.active {
             display: block;
         }
         
-        .card {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-bottom: 20px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px; /* Increased margin */
+            text-align: center;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px; /* Increased margin */
         }
         
         .card-header {
-            background-color: white;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background: white;
+            border-bottom: 1px solid #eaeaea;
             font-weight: 600;
+            padding: 15px 20px;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        /* Feature Icons */
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 10px 20px;
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
+            background: var(--primary-color);
             border-color: var(--primary-color);
         }
         
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            padding: 60px 0;
-            border-radius: 0 0 20px 20px;
-            margin-bottom: 30px;
-        }
-        
-        .feature-icon {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
-        
+        /* Auth Forms */
         .auth-container {
             max-width: 400px;
-            margin: 50px auto;
-            padding: 30px;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
         }
         
-        .file-item {
-            padding: 15px;
-            border-radius: 8px;
-            background-color: white;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .file-actions button {
-            margin-left: 5px;
-        }
-        
+        /* User Avatar */
         .user-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background-color: var(--primary-color);
+            background: var(--primary-color);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
         
+        /* Loading Spinner */
         .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
+            display: flex;
+            justify-content: center;
+            padding: 30px;
         }
         
+        /* Chat Styles */
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eaeaea;
+            border-radius: 12px;
+            padding: 15px;
+            background: #f9f9f9;
+            margin-bottom: 15px;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .own-message {
+            justify-content: flex-end;
+        }
+        
+        .other-message {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 75%;
+            padding: 12px 15px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        
+        .own-message .message-content {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .other-message .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+        
+        .user-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-item.active {
+            background: rgba(67, 97, 238, 0.1);
+        }
+        
+        .user-avatar-sm {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-left: auto;
+        }
+        
+        .user-status.online {
+            background: var(--success-color);
+        }
+        
+        /* List Items */
+        .list-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+        
+        .list-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .list-item-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        /* File Upload Styles */
+        .file-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: #e9ecef;
+        }
+        
+        .file-upload-area i {
+            font-size: 2rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .file-preview-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        
+        .file-preview-item .file-name {
+            flex: 1;
+        }
+        
+        .file-preview-item .file-remove {
+            color: var(--danger-color);
+            cursor: pointer;
+        }
+        
+        /* Badges */
+        .badge {
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 0.7rem;
+        }
+        
+        /* Hide navbar toggler */
+        .navbar-toggler, .navbar-collapse {
+            display: none !important;
+        }
+        
+        .navbar-nav {
+            flex-direction: row !important;
+            align-items: center;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: #6c757d;
         }
-        
+
         .empty-state i {
             font-size: 3rem;
             margin-bottom: 15px;
-            color: #dee2e6;
+            opacity: 0.5;
         }
-        
-        .welcome-user {
-            font-weight: 600;
-            color: var(--primary-color);
+
+        /* Real-time indicators */
+        .real-time-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--success-color);
+            border-radius: 50%;
+            margin-left: 5px;
+            animation: pulse 2s infinite;
         }
-        
-        @media (max-width: 768px) {
-            .hero-section {
-                padding: 40px 0;
-            }
-            
-            .section {
-                padding: 15px 0;
-            }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .new-item-indicator {
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Top Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-book me-2"></i>CampusNote
+                <i class="fas fa-book me-2"></i>CampusNote <span class="real-time-indicator"></span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#" data-section="dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-section="notes">Notes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-section="assignments">Assignments</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-section="past-questions">Past Questions</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-section="profile">Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="https://campus-note-editor.vercel.app" >Note Editor</a>
-                    </li>
-                </ul>
-                <div class="navbar-nav">
-                    <div class="nav-item dropdown" id="userDropdown" style="display: none;">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <span id="userInitials" class="user-avatar me-2"></span>
-                            <span id="userName"></span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" data-section="profile"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                        </ul>
-                    </div>
-                    <div id="authButtons" class="d-flex order-first">
-                        <button class="btn btn-outline-light me-2" id="loginBtn">Login</button>
-                        <button class="btn btn-light" id="signupBtn">Sign Up</button>
-                    </div>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown" id="userDropdown" style="display: none;">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <span id="userInitials" class="user-avatar me-2"></span>
+                        <span id="userName"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-section="profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+                <div id="authButtons" class="d-flex">
+                    <button class="btn btn-outline-light me-2" id="loginBtn">Login</button>
+                    <button class="btn btn-light" id="signupBtn">Sign Up</button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Authentication Section -->
-    <div id="auth-section" class="section active">
-        <div class="container">
-            <div class="auth-container" id="loginForm">
-                <h3 class="text-center mb-4">Login to CampusNote</h3>
-                <form id="loginFormElement">
-                    <div class="mb-3">
-                        <label for="loginEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="loginEmail" required>
+    <!-- Main Content -->
+    <div class="container-fluid mt-4"> <!-- Reduced top margin since we have body padding -->
+        <!-- Authentication Section -->
+        <div id="auth-section" class="section active">
+            <div class="container">
+                <div class="auth-container" id="loginForm">
+                    <h3 class="text-center mb-4">Login to CampusNote</h3>
+                    <form id="loginFormElement">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
                     </div>
-                    <div class="mb-3">
-                        <label for="loginPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="loginPassword" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Login</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+                    <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
                 </div>
-                <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
-            </div>
-            
-            <div class="auth-container" id="signupForm" style="display: none;">
-                <h3 class="text-center mb-4">Create Account</h3>
-                <form id="signupFormElement">
-                    <div class="mb-3">
-                        <label for="signupName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="signupName" required>
+                
+                <div class="auth-container" id="signupForm" style="display: none;">
+                    <h3 class="text-center mb-4">Create Account</h3>
+                    <form id="signupFormElement">
+                        <div class="mb-3">
+                            <label for="signupName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="signupName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="signupEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="signupEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="signupPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="signupPassword" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="signupLevel" class="form-label">Academic Level</label>
+                            <select class="form-select" id="signupLevel" required>
+                                <option value="">Select Level</option>
+                                <option value="100L">100 Level</option>
+                                <option value="200L">200 Level</option>
+                                <option value="300L">300 Level</option>
+                                <option value="400L">400 Level</option>
+                                <option value="500L">500 Level</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="signupDepartment" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="signupDepartment" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Sign Up</button>
+                        </div>
+                    </form>
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
                     </div>
-                    <div class="mb-3">
-                        <label for="signupEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="signupEmail" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="signupPassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="signupPassword" required minlength="6">
-                    </div>
-                    <div class="mb-3">
-                        <label for="signupLevel" class="form-label">Academic Level</label>
-                        <select class="form-select" id="signupLevel" required>
-                            <option value="">Select Level</option>
-                            <option value="year1">Year 1</option>
-                            <option value="year2">Year 2</option>
-                            <option value="year3">Year 3</option>
-                            <option value="year4">Year 4</option>
-                            <option value="year5">Year 5</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="signupDepartment" class="form-label">Department</label>
-                        <input type="text" class="form-control" id="signupDepartment" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Sign Up</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+                    <div id="signupError" class="alert alert-danger mt-3" style="display: none;"></div>
                 </div>
-                <div id="signupError" class="alert alert-danger mt-3" style="display: none;"></div>
             </div>
         </div>
-    </div>
 
-    <!-- Dashboard Section -->
-    <div id="dashboard" class="section">
-        <div class="hero-section">
-            <div class="container text-center">
-                <h1 class="display-5 fw-bold">Welcome to CampusNote</h1>
-                <p class="lead">Your academic companion for notes, assignments, and past questions</p>
-                <p class="welcome-user" id="welcomeUser">Hello, Student!</p>
-            </div>
-        </div>
-        
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 text-center">
-                        <div class="card-body">
-                            <div class="feature-icon">
-                                <i class="fas fa-sticky-note"></i>
-                            </div>
-                            <h5 class="card-title">Lecture Notes</h5>
-                            <p class="card-text">Access and share summarized notes from your classes</p>
-                            <a href="#" class="btn btn-primary" data-section="notes">View Notes</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 text-center">
-                        <div class="card-body">
-                            <div class="feature-icon">
-                                <i class="fas fa-tasks"></i>
-                            </div>
-                            <h5 class="card-title">Assignments</h5>
-                            <p class="card-text">Track your assignments and submission deadlines</p>
-                            <a href="#" class="btn btn-primary" data-section="assignments">View Assignments</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 text-center">
-                        <div class="card-body">
-                            <div class="feature-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <h5 class="card-title">Past Questions</h5>
-                            <p class="card-text">Prepare for exams with past questions and answers</p>
-                            <a href="#" class="btn btn-primary" data-section="past-questions">View Past Questions</a>
-                        </div>
-                    </div>
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section">
+            <div class="hero-section">
+                <div class="container text-center">
+                    <h1 class="display-5 fw-bold">Welcome to CampusNote <span class="real-time-indicator"></span></h1>
+                    <p class="lead">Your academic companion for notes, assignments, and past questions</p>
+                    <p class="welcome-user" id="welcomeUser">Hello, Student!</p>
                 </div>
             </div>
             
-            <div class="row mt-4">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span>Recent Notes</span>
-                            <a href="#" data-section="notes" class="btn btn-sm btn-primary">View All</a>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-sticky-note"></i>
+                                </div>
+                                <h5 class="card-title">Lecture Notes</h5>
+                                <p class="card-text">Access and share summarized notes from your classes</p>
+                                <a href="#" class="btn btn-primary" data-section="notes">View Notes</a>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div id="recentNotesList" class="loading-spinner">
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <h5 class="card-title">Assignments</h5>
+                                <p class="card-text">Track your assignments and submission deadlines</p>
+                                <a href="#" class="btn btn-primary" data-section="assignments">View Assignments</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <h5 class="card-title">Past Questions</h5>
+                                <p class="card-text">Prepare for exams with past questions and answers</p>
+                                <a href="#" class="btn btn-primary" data-section="past-questions">View Past Questions</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Recent Notes <span class="real-time-indicator"></span></span>
+                                <a href="#" data-section="notes" class="btn btn-sm btn-primary">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentNotesContent">
+                                    <div class="loading-spinner">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Upcoming Assignments <span class="real-time-indicator"></span></span>
+                            </div>
+                            <div class="card-body">
+                                <div id="upcomingAssignmentsContent">
+                                    <div class="loading-spinner">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div id="notes" class="section">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Lecture Notes <span class="real-time-indicator"></span></h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                        <i class="fas fa-plus me-2"></i>Add Note
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div id="notesContent">
+                            <div class="loading-spinner">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
-                            <div id="recentNotesContent">
-                                <!-- Recent notes will be loaded here -->
-                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            Upcoming Assignments
-                        </div>
-                        <div class="card-body">
-                            <div id="upcomingAssignmentsList" class="loading-spinner">
+            </div>
+        </div>
+
+        <!-- Assignments Section -->
+        <div id="assignments" class="section">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Assignments <span class="real-time-indicator"></span></h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
+                        <i class="fas fa-plus me-2"></i>Add Assignment
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div id="assignmentsContent">
+                            <div class="loading-spinner">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
-                            <div id="upcomingAssignmentsContent">
-                                <!-- Upcoming assignments will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Past Questions Section -->
+        <div id="past-questions" class="section">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Past Questions <span class="real-time-indicator"></span></h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
+                        <i class="fas fa-plus me-2"></i>Add Past Question
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div id="pastQuestionsContent">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div id="chat" class="section">
+            <div class="container">
+                <h2 class="mb-4">Chat <span class="real-time-indicator"></span></h2>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Online Users <span class="real-time-indicator"></span></h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="onlineUsers">
+                                    <div class="loading-spinner">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="chatWithUser">Select a user to chat with</h5>
+                                <span class="user-status" id="chatUserStatus"></span>
+                            </div>
+                            <div class="card-body">
+                                <div id="chatMessages" class="chat-messages">
+                                    <div class="empty-state">
+                                        <i class="fas fa-comments"></i>
+                                        <p>Select a user to start chatting</p>
+                                    </div>
+                                </div>
+                                <div class="chat-input mt-3">
+    <div class="input-group">
+        <input type="text" id="messageInput" class="form-control" placeholder="Type your message..." disabled>
+        <button class="btn btn-primary" id="sendMessage" type="button" onclick="window.sendMessage()" disabled>
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile" class="section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 1.5rem;" id="profileAvatar">
+                                    <!-- User initials will appear here -->
+                                </div>
+                                <h4 id="profileName">User Name</h4>
+                                <p class="text-muted" id="profileLevel">Level</p>
+                                <p class="text-muted" id="profileDepartment">Department</p>
+                                <p class="text-muted" id="profileEmail">Email</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">My Contributions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <h3 id="myNotesCount">0</h3>
+                                        <p class="text-muted">Notes</p>
+                                    </div>
+                                    <div class="col-4">
+                                        <h3 id="myAssignmentsCount">0</h3>
+                                        <p class="text-muted">Assignments</p>
+                                    </div>
+                                    <div class="col-4">
+                                        <h3 id="myPastQuestionsCount">0</h3>
+                                        <p class="text-muted">Past Questions</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Edit Profile</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="profileForm">
+                                    <div class="mb-3">
+                                        <label for="editName" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="editName">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editLevel" class="form-label">Academic Level</label>
+                                        <select class="form-select" id="editLevel">
+                                            <option value="100L">100 Level</option>
+                                            <option value="200L">200 Level</option>
+                                            <option value="300L">300 Level</option>
+                                            <option value="400L">400 Level</option>
+                                            <option value="500L">500 Level</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editDepartment" class="form-label">Department</label>
+                                        <input type="text" class="form-control" id="editDepartment">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -381,160 +809,39 @@
         </div>
     </div>
 
-    <!-- Notes Section -->
-    <div id="notes" class="section">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Lecture Notes</h2>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-                    <i class="fas fa-plus me-2"></i>Add Note
-                </button>
-            </div>
-            
-            <div class="card">
-                <div class="card-body">
-                    <div id="notesList" class="loading-spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <div id="notesContent">
-                        <!-- Notes will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Assignments Section -->
-    <div id="assignments" class="section">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Assignments</h2>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
-                    <i class="fas fa-plus me-2"></i>Add Assignment
-                </button>
-            </div>
-            
-            <div class="card">
-                <div class="card-body">
-                    <div id="assignmentsList" class="loading-spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <div id="assignmentsContent">
-                        <!-- Assignments will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Past Questions Section -->
-    <div id="past-questions" class="section">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Past Questions</h2>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
-                    <i class="fas fa-plus me-2"></i>Add Past Question
-                </button>
-            </div>
-            
-            <div class="card">
-                <div class="card-body">
-                    <div id="pastQuestionsList" class="loading-spinner">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <div id="pastQuestionsContent">
-                        <!-- Past questions will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Section -->
-    <div id="profile" class="section">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 1.5rem;" id="profileAvatar">
-                                <!-- User initials will appear here -->
-                            </div>
-                            <h4 id="profileName">User Name</h4>
-                            <p class="text-muted" id="profileLevel">Level</p>
-                            <p class="text-muted" id="profileDepartment">Department</p>
-                            <p class="text-muted" id="profileEmail">Email</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">My Contributions</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <h3 id="myNotesCount">0</h3>
-                                    <p class="text-muted">Notes</p>
-                                </div>
-                                <div class="col-4">
-                                    <h3 id="myAssignmentsCount">0</h3>
-                                    <p class="text-muted">Assignments</p>
-                                </div>
-                                <div class="col-4">
-                                    <h3 id="myPastQuestionsCount">0</h3>
-                                    <p class="text-muted">Past Questions</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Edit Profile</h5>
-                        </div>
-                        <div class="card-body">
-                            <form id="profileForm">
-                                <div class="mb-3">
-                                    <label for="editName" class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" id="editName">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="editLevel" class="form-label">Academic Level</label>
-                                    <select class="form-select" id="editLevel">
-                                        <option value="ND1">ND 1</option>
-                                        <option value="ND2">ND 2</option>
-                                        <option value="HND1">HND 1</option>
-                                        <option value="HND2">HND 2</option>
-                                        <option value="100L">100 Level</option>
-                                        <option value="200L">200 Level</option>
-                                        <option value="300L">300 Level</option>
-                                        <option value="400L">400 Level</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="editDepartment" class="form-label">Department</label>
-                                    <input type="text" class="form-control" id="editDepartment">
-                                </div>
-                                <button type="submit" class="btn btn-primary">Update Profile</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="bottom-nav-content">
+            <button class="bottom-nav-item active" data-section="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </button>
+            <button class="bottom-nav-item" data-section="notes">
+                <i class="fas fa-sticky-note"></i>
+                <span>Notes</span>
+            </button>
+            <button class="bottom-nav-item" data-section="assignments">
+                <i class="fas fa-tasks"></i>
+                <span>Tasks</span>
+            </button>
+            <button class="bottom-nav-item" data-section="past-questions">
+                <i class="fas fa-file-alt"></i>
+                <span>Questions</span>
+            </button>
+            <button class="bottom-nav-item" data-section="chat">
+                <i class="fas fa-comments"></i>
+                <span>Chat</span>
+            </button>
+            <button class="bottom-nav-item" data-section="profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </button>
         </div>
     </div>
 
     <!-- Add Note Modal -->
     <div class="modal fade" id="addNoteModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add New Note</h5>
@@ -552,11 +859,17 @@
                         </div>
                         <div class="mb-3">
                             <label for="noteContent" class="form-label">Content</label>
-                            <textarea class="form-control" id="noteContent" rows="4" required></textarea>
+                            <textarea class="form-control" id="noteContent" rows="6" required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="noteFile" class="form-label">Upload File (Optional)</label>
-                            <input class="form-control" type="file" id="noteFile">
+                            <label class="form-label">Attach Files (Optional)</label>
+                            <div class="file-upload-area" onclick="document.getElementById('noteFiles').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p class="mb-1">Click to upload files or drag and drop</p>
+                                <small class="text-muted">PDF, DOC, DOCX, Images (Max 10MB)</small>
+                                <input type="file" class="file-input" id="noteFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt">
+                            </div>
+                            <div id="noteFilesPreview" class="file-preview"></div>
                         </div>
                     </form>
                 </div>
@@ -570,7 +883,7 @@
 
     <!-- Add Assignment Modal -->
     <div class="modal fade" id="addAssignmentModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add New Assignment</h5>
@@ -588,15 +901,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="assignmentDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="assignmentDescription" rows="3" required></textarea>
+                            <textarea class="form-control" id="assignmentDescription" rows="4" required></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="assignmentDueDate" class="form-label">Due Date</label>
                             <input type="date" class="form-control" id="assignmentDueDate" required>
                         </div>
                         <div class="mb-3">
-                            <label for="assignmentFile" class="form-label">Upload File (Optional)</label>
-                            <input class="form-control" type="file" id="assignmentFile">
+                            <label class="form-label">Attach Files (Optional)</label>
+                            <div class="file-upload-area" onclick="document.getElementById('assignmentFiles').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p class="mb-1">Click to upload assignment files</p>
+                                <small class="text-muted">PDF, DOC, DOCX, ZIP (Max 10MB)</small>
+                                <input type="file" class="file-input" id="assignmentFiles" multiple accept=".pdf,.doc,.docx,.zip,.rar,.txt">
+                            </div>
+                            <div id="assignmentFilesPreview" class="file-preview"></div>
                         </div>
                     </form>
                 </div>
@@ -610,7 +929,7 @@
 
     <!-- Add Past Question Modal -->
     <div class="modal fade" id="addPastQuestionModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add Past Question</h5>
@@ -631,8 +950,14 @@
                             <input type="text" class="form-control" id="pastQuestionYear" required>
                         </div>
                         <div class="mb-3">
-                            <label for="pastQuestionFile" class="form-label">Upload File</label>
-                            <input class="form-control" type="file" id="pastQuestionFile" required>
+                            <label class="form-label">Upload Past Question File</label>
+                            <div class="file-upload-area" onclick="document.getElementById('pastQuestionFile').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p class="mb-1">Click to upload past question file</p>
+                                <small class="text-muted">PDF, DOC, DOCX, Images (Max 10MB)</small>
+                                <input type="file" class="file-input" id="pastQuestionFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            </div>
+                            <div id="pastQuestionFilePreview" class="file-preview"></div>
                         </div>
                     </form>
                 </div>
@@ -644,11 +969,7 @@
         </div>
     </div>
 
-            <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
@@ -656,943 +977,1371 @@ const supabaseUrl = 'https://nijpmtwihccpaqsiirva.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5panBtdHdpaGNjcGFxc2lpcnZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTI3MjQsImV4cCI6MjA3NDcyODcyNH0.aepDRx4Ew0zHdS6HAOUi1C8NXdMXvX5cf5ScQyfrvCM';
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-        // DOM Elements
-        const sections = document.querySelectorAll('.section');
-        const navLinks = document.querySelectorAll('.nav-link');
-        const authSection = document.getElementById('auth-section');
-        const loginForm = document.getElementById('loginForm');
-        const signupForm = document.getElementById('signupForm');
-        const loginFormElement = document.getElementById('loginFormElement');
-        const signupFormElement = document.getElementById('signupFormElement');
-        const showSignup = document.getElementById('showSignup');
-        const showLogin = document.getElementById('showLogin');
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userDropdown = document.getElementById('userDropdown');
-        const authButtons = document.getElementById('authButtons');
-        const userName = document.getElementById('userName');
-        const userInitials = document.getElementById('userInitials');
-        const welcomeUser = document.getElementById('welcomeUser');
-        
-        // ========== HELPER FUNCTIONS (DEFINE THESE FIRST) ==========
-        
-        // Format date function
-        function formatDate(dateString) {
-            if (!dateString) return 'Unknown date';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
+        // Global variables
+        let currentUser = null;
+        let currentChatUser = null;
+        let chatSubscription = null;
+        let notesSubscription = null;
+        let assignmentsSubscription = null;
+        let pastQuestionsSubscription = null;
+
+        // DOM Content Loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 CampusNote - Real-time Academic Platform');
+            initializeApp();
+            setupEventListeners();
+            checkAuthState();
+            setupFileUploadHandlers();
+        });
+
+        function initializeApp() {
+            console.log('🔧 Initializing real-time app');
+            if (window.innerWidth <= 768) {
+                setupMobileNavigation();
+            }
+        }
+
+        function setupEventListeners() {
+            console.log('🔧 Setting up event listeners');
+            
+            // Authentication
+            const loginBtn = document.getElementById('loginBtn');
+            const signupBtn = document.getElementById('signupBtn');
+            const showSignup = document.getElementById('showSignup');
+            const showLogin = document.getElementById('showLogin');
+            const loginForm = document.getElementById('loginFormElement');
+            const signupForm = document.getElementById('signupFormElement');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (loginBtn) loginBtn.addEventListener('click', showLoginForm);
+            if (signupBtn) signupBtn.addEventListener('click', showSignupForm);
+            if (showSignup) showSignup.addEventListener('click', showSignupForm);
+            if (showLogin) showLogin.addEventListener('click', showLoginForm);
+            if (loginForm) loginForm.addEventListener('submit', handleLogin);
+            if (signupForm) signupForm.addEventListener('submit', handleSignup);
+            if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+
+            // Bottom navigation
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    console.log('📱 Switching to section:', section);
+                    switchSection(section);
+                    updateBottomNav(this);
+                });
+            });
+
+            // Modal forms
+            const saveNoteBtn = document.getElementById('saveNoteBtn');
+            const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
+            const savePastQuestionBtn = document.getElementById('savePastQuestionBtn');
+            
+            if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNote);
+            if (saveAssignmentBtn) saveAssignmentBtn.addEventListener('click', saveAssignment);
+            if (savePastQuestionBtn) savePastQuestionBtn.addEventListener('click', savePastQuestion);
+            
+            // Profile form
+            const profileForm = document.getElementById('profileForm');
+            if (profileForm) profileForm.addEventListener('submit', updateProfile);
+            
+            // Chat
+            const sendMessageBtn = document.getElementById('sendMessage');
+            const messageInput = document.getElementById('messageInput');
+            
+            if (sendMessageBtn) sendMessageBtn.addEventListener('click', sendMessage);
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') sendMessage();
+                });
+            }
+
+            // Section navigation from cards
+            document.querySelectorAll('[data-section]').forEach(link => {
+                if (!link.classList.contains('bottom-nav-item')) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const section = this.getAttribute('data-section');
+                        console.log('🔗 Navigation to:', section);
+                        switchSection(section);
+                        updateBottomNavForSection(section);
+                    });
+                }
             });
         }
 
-        // Create note element
-        function createNoteElement(id, note) {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div>
-                    <h6 class="mb-1">${note.title}</h6>
-                    <p class="mb-1 text-muted">${note.course} • ${formatDate(note.created_at)}</p>
-                    <p class="mb-0">${note.content ? note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '') : 'No content'}</p>
-                </div>
-                <div class="file-actions">
-                    ${note.file_url ? `<a href="${note.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            return div;
-        }
-
-        // Create assignment element
-        function createAssignmentElement(id, assignment) {
-            const dueDate = new Date(assignment.due_date);
-            const today = new Date();
-            const timeDiff = dueDate.getTime() - today.getTime();
-            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            
-            let statusClass = 'text-success';
-            let statusText = `${daysDiff} days remaining`;
-            
-            if (daysDiff < 0) {
-                statusClass = 'text-danger';
-                statusText = 'Overdue';
-            } else if (daysDiff === 0) {
-                statusClass = 'text-warning';
-                statusText = 'Due today';
-            } else if (daysDiff <= 3) {
-                statusClass = 'text-warning';
+        function setupFileUploadHandlers() {
+            // Note files upload
+            const noteFilesInput = document.getElementById('noteFiles');
+            if (noteFilesInput) {
+                noteFilesInput.addEventListener('change', function(e) {
+                    handleFileUpload(e, 'noteFilesPreview');
+                });
             }
+
+            // Assignment files upload
+            const assignmentFilesInput = document.getElementById('assignmentFiles');
+            if (assignmentFilesInput) {
+                assignmentFilesInput.addEventListener('change', function(e) {
+                    handleFileUpload(e, 'assignmentFilesPreview');
+                });
+            }
+
+            // Past question file upload
+            const pastQuestionFileInput = document.getElementById('pastQuestionFile');
+            if (pastQuestionFileInput) {
+                pastQuestionFileInput.addEventListener('change', function(e) {
+                    handleFileUpload(e, 'pastQuestionFilePreview', true);
+                });
+            }
+        }
+
+        function handleFileUpload(event, previewContainerId, singleFile = false) {
+            const files = event.target.files;
+            const previewContainer = document.getElementById(previewContainerId);
             
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div>
-                    <h6 class="mb-1">${assignment.title}</h6>
-                    <p class="mb-1 text-muted">${assignment.course} • Due: ${formatDate(assignment.due_date)}</p>
-                    <p class="mb-0">${assignment.description ? assignment.description.substring(0, 100) + (assignment.description.length > 100 ? '...' : '') : 'No description'}</p>
-                    <p class="mb-0 ${statusClass}"><small>${statusText}</small></p>
-                </div>
-                <div class="file-actions">
-                    ${assignment.file_url ? `<a href="${assignment.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignment('${id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            return div;
+            if (!previewContainer) return;
+
+            if (singleFile && files.length > 1) {
+                alert('Please select only one file.');
+                event.target.value = '';
+                return;
+            }
+
+            previewContainer.innerHTML = '';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+                    continue;
+                }
+
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-preview-item';
+                fileItem.innerHTML = `
+                    <span class="file-name">
+                        <i class="fas fa-file me-2"></i>${file.name}
+                    </span>
+                    <span class="file-remove" onclick="removeFile(this, '${event.target.id}')">
+                        <i class="fas fa-times"></i>
+                    </span>
+                `;
+                previewContainer.appendChild(fileItem);
+            }
         }
 
-        // Create past question element
-        function createPastQuestionElement(id, pastQuestion) {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `
-                <div>
-                    <h6 class="mb-1">${pastQuestion.title}</h6>
-                    <p class="mb-1 text-muted">${pastQuestion.course} • ${pastQuestion.year} • ${formatDate(pastQuestion.created_at)}</p>
-                </div>
-                <div class="file-actions">
-                    <a href="${pastQuestion.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deletePastQuestion('${id}')"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            return div;
+        function removeFile(element, inputId) {
+            const fileItem = element.closest('.file-preview-item');
+            fileItem.remove();
+            
+            // Clear the file input
+            const fileInput = document.getElementById(inputId);
+            if (fileInput) {
+                fileInput.value = '';
+            }
         }
 
-        // ========== DATA LOADING FUNCTIONS ==========
-        
-        // Load notes
-async function loadNotes() {
-    const notesContent = document.getElementById('notesContent');
-    const notesList = document.getElementById('notesList');
-    
-    notesList.style.display = 'block';
-    notesContent.innerHTML = '';
+        // Make removeFile available globally
+        window.removeFile = removeFile;
+
+        function setupMobileNavigation() {
+            const authButtons = document.getElementById('authButtons');
+            if (!authButtons) return;
+            
+            if (window.innerWidth <= 768) {
+                authButtons.classList.add('dropdown');
+                authButtons.innerHTML = `
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" id="mobileLoginBtn">Login</a></li>
+                        <li><a class="dropdown-item" href="#" id="mobileSignupBtn">Sign Up</a></li>
+                    </ul>
+                `;
+                
+                setTimeout(() => {
+                    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+                    const mobileSignupBtn = document.getElementById('mobileSignupBtn');
+                    if (mobileLoginBtn) mobileLoginBtn.addEventListener('click', showLoginForm);
+                    if (mobileSignupBtn) mobileSignupBtn.addEventListener('click', showSignupForm);
+                }, 100);
+            }
+        }
+
+        async function checkAuthState() {
+            console.log('🔐 Checking authentication state');
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (session) {
+                    console.log('✅ User authenticated:', session.user.email);
+                    currentUser = session.user;
+                    await loadUserProfile();
+                    showAuthenticatedUI();
+                    loadDashboardData();
+                    setupRealtimeSubscriptions();
+                } else {
+                    console.log('❌ No active session');
+                    showUnauthenticatedUI();
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                showUnauthenticatedUI();
+            }
+        }
+
+        // Authentication functions
+        function showLoginForm(e) { 
+            if (e) e.preventDefault(); 
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signupForm').style.display = 'none';
+            switchSection('auth-section');
+        }
+
+        function showSignupForm(e) { 
+            if (e) e.preventDefault(); 
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+            switchSection('auth-section');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                
+                currentUser = data.user;
+                await loadUserProfile();
+                showAuthenticatedUI();
+                loadDashboardData();
+                setupRealtimeSubscriptions();
+                
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                }
+            }
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const level = document.getElementById('signupLevel').value;
+            const department = document.getElementById('signupDepartment').value;
+            const errorDiv = document.getElementById('signupError');
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email, password,
+                    options: { data: { name, level, department } }
+                });
+                if (error) throw error;
+                
+                await supabase.from('profiles').insert([{
+                    id: data.user.id, name, email, level, department, created_at: new Date()
+                }]);
+                
+                alert('Signup successful! Please check your email for verification.');
+                showLoginForm();
+                
+            } catch (error) {
+                if (errorDiv) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                }
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await supabase.auth.signOut();
+                currentUser = null;
+                showUnauthenticatedUI();
+                removeAllSubscriptions();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function removeAllSubscriptions() {
+            if (chatSubscription) supabase.removeSubscription(chatSubscription);
+            if (notesSubscription) supabase.removeSubscription(notesSubscription);
+            if (assignmentsSubscription) supabase.removeSubscription(assignmentsSubscription);
+            if (pastQuestionsSubscription) supabase.removeSubscription(pastQuestionsSubscription);
+        }
+
+        // User profile management
+        async function loadUserProfile() {
+            if (!currentUser) return;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        await createUserProfile();
+                        return;
+                    }
+                    throw error;
+                }
+                
+                currentUser.profile = data;
+                updateProfileUI();
+            } catch (error) {
+                console.error('Profile load error:', error);
+                await createUserProfile();
+            }
+        }
+
+        async function createUserProfile() {
+            try {
+                const userData = currentUser.user_metadata || {};
+                const { data, error } = await supabase.from('profiles').insert([{
+                    id: currentUser.id,
+                    name: userData.name || currentUser.email?.split('@')[0] || 'User',
+                    email: currentUser.email,
+                    level: userData.level || '100L',
+                    department: userData.department || 'General',
+                    created_at: new Date()
+                }]).select().single();
+                
+                if (error) throw error;
+                currentUser.profile = data;
+                updateProfileUI();
+            } catch (error) {
+                console.error('Profile creation error:', error);
+                currentUser.profile = {
+                    id: currentUser.id,
+                    name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
+                    email: currentUser.email,
+                    level: currentUser.user_metadata?.level || '100L',
+                    department: currentUser.user_metadata?.department || 'General'
+                };
+                updateProfileUI();
+            }
+        }
+
+        function updateProfileUI() {
+            if (!currentUser || !currentUser.profile) return;
+            
+            const profile = currentUser.profile;
+            const initials = getInitials(profile.name);
+            
+            // Update navigation
+            const userInitials = document.getElementById('userInitials');
+            const userName = document.getElementById('userName');
+            const welcomeUser = document.getElementById('welcomeUser');
+            
+            if (userInitials) userInitials.textContent = initials;
+            if (userName) userName.textContent = profile.name;
+            if (welcomeUser) welcomeUser.textContent = `Hello, ${profile.name}!`;
+            
+            // Update profile section
+            const profileAvatar = document.getElementById('profileAvatar');
+            const profileName = document.getElementById('profileName');
+            const profileLevel = document.getElementById('profileLevel');
+            const profileDepartment = document.getElementById('profileDepartment');
+            const profileEmail = document.getElementById('profileEmail');
+            
+            if (profileAvatar) profileAvatar.textContent = initials;
+            if (profileName) profileName.textContent = profile.name;
+            if (profileLevel) profileLevel.textContent = profile.level;
+            if (profileDepartment) profileDepartment.textContent = profile.department;
+            if (profileEmail) profileEmail.textContent = currentUser.email;
+            
+            // Set form values
+            const editName = document.getElementById('editName');
+            const editLevel = document.getElementById('editLevel');
+            const editDepartment = document.getElementById('editDepartment');
+            
+            if (editName) editName.value = profile.name;
+            if (editLevel) editLevel.value = profile.level;
+            if (editDepartment) editDepartment.value = profile.department;
+            
+            loadUserContributions();
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+
+        // UI State Management
+        function showAuthenticatedUI() {
+            const authSection = document.getElementById('auth-section');
+            const authButtons = document.getElementById('authButtons');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (authSection) authSection.classList.remove('active');
+            if (authButtons) authButtons.style.display = 'none';
+            if (userDropdown) userDropdown.style.display = 'block';
+            
+            document.querySelectorAll('.section').forEach(section => {
+                if (section.id !== 'auth-section') section.style.display = 'none';
+            });
+            
+            switchSection('dashboard');
+        }
+
+        function showUnauthenticatedUI() {
+            const authSection = document.getElementById('auth-section');
+            const authButtons = document.getElementById('authButtons');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (authSection) authSection.classList.add('active');
+            if (authButtons) authButtons.style.display = 'flex';
+            if (userDropdown) userDropdown.style.display = 'none';
+            
+            document.querySelectorAll('.section').forEach(section => {
+                if (section.id !== 'auth-section') section.style.display = 'none';
+            });
+        }
+
+        function switchSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+                section.style.display = 'none';
+            });
+            
+            // Show target section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                targetSection.style.display = 'block';
+            }
+// ==================== CHAT FUNCTIONS ====================
+
+// Load online users for chat
+window.loadOnlineUsers = async function() {
+    const container = document.getElementById('onlineUsers');
+    if (!container) return;
     
     try {
-        const { data: notes, error } = await supabase
-            .from('notes')
-            .select('*, profiles(full_name, department)')  // Join with profiles to get user info
-            .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .neq('id', currentUser.id)
+            .order('name');
         
         if (error) throw error;
         
-        notesList.style.display = 'none';
-        
-        if (!notes || notes.length === 0) {
-            notesContent.innerHTML = `
+        if (!data || data.length === 0) {
+            container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-sticky-note"></i>
-                    <h5>No Notes Yet</h5>
-                    <p>Start by adding your first note!</p>
+                    <i class="fas fa-users"></i>
+                    <p>No other users online</p>
                 </div>
             `;
             return;
         }
         
-        notesContent.innerHTML = '';
-        notes.forEach(note => {
-            const noteElement = createSharedNoteElement(note.id, note);
-            notesContent.appendChild(noteElement);
-        });
+        container.innerHTML = data.map(user => {
+            const initials = getInitials(user.name);
+            return `
+                <div class="user-item" onclick="window.selectChatUser('${user.id}', '${user.name}', event)">
+                    <div class="user-avatar-sm">${initials}</div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${user.name}</div>
+                        <small class="text-muted">${user.level} • ${user.department}</small>
+                    </div>
+                    <div class="user-status online"></div>
+                </div>
+            `;
+        }).join('');
+        
     } catch (error) {
-        notesList.style.display = 'none';
-        notesContent.innerHTML = `<div class="alert alert-danger">Error loading notes: ${error.message}</div>`;
+        container.innerHTML = '<p class="text-danger">Error loading users</p>';
     }
 }
 
-// Create shared note element (shows who uploaded it)
-function createSharedNoteElement(id, note) {
-    const userName = note.profiles?.full_name || 'Unknown User';
-    const userDepartment = note.profiles?.department || 'Unknown Department';
+// Select user to chat with - GLOBAL
+window.selectChatUser = async function(userId, userName, event) {
+    console.log('💬 Selecting chat user:', userName);
     
-    const div = document.createElement('div');
-    div.className = 'file-item';
-    div.innerHTML = `
-        <div>
-            <h6 class="mb-1">${note.title}</h6>
-            <p class="mb-1 text-muted">
-                ${note.course} • ${formatDate(note.created_at)}<br>
-                <small>Uploaded by: ${userName} (${userDepartment})</small>
-            </p>
-            <p class="mb-0">${note.content ? note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '') : 'No content'}</p>
-        </div>
-        <div class="file-actions">
-            ${note.file_url ? `<a href="${note.file_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-download"></i></a>` : ''}
-            <!-- Only show delete button if it's the user's own note -->
-            ${note.user_id === (supabase.auth.getUser()).data.user?.id ? 
-                `<button class="btn btn-sm btn-outline-danger" onclick="deleteNote('${id}')"><i class="fas fa-trash"></i></button>` : 
-                ''
-            }
+    if (!currentUser) {
+        alert('Please log in to use chat');
+        return;
+    }
+    
+    currentChatUser = { id: userId, name: userName };
+    
+    const chatWithUser = document.getElementById('chatWithUser');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageBtn = document.getElementById('sendMessage');
+    
+    if (chatWithUser) chatWithUser.textContent = `Chat with ${userName}`;
+    if (messageInput) {
+        messageInput.disabled = false;
+        messageInput.focus();
+    }
+    if (sendMessageBtn) sendMessageBtn.disabled = false;
+    
+    // Highlight selected user
+    document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+    
+    await window.loadChatHistory(userId);
+}
+
+// Load chat history - GLOBAL
+window.loadChatHistory = async function(userId) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        container.innerHTML = '';
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>No messages yet. Start a conversation!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        data.forEach(message => window.displayMessage(message));
+        window.scrollChatToBottom();
+    } catch (error) {
+        container.innerHTML = '<p class="text-danger">Error loading messages</p>';
+    }
+}
+
+// Display a message in the chat - GLOBAL
+window.displayMessage = function(message) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    
+    const isOwnMessage = message.sender_id === currentUser.id;
+    const messageTime = formatTime(message.created_at);
+    
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
+    messageElement.innerHTML = `
+        <div class="message-content">
+            <div>${escapeHtml(message.content)}</div>
+            <div class="message-time">${messageTime}</div>
         </div>
     `;
-    return div;
+    
+    container.appendChild(messageElement);
 }
-        // Load assignments - REAL FUNCTION
-        async function loadAssignments(userId) {
-            const assignmentsContent = document.getElementById('assignmentsContent');
-            const assignmentsList = document.getElementById('assignmentsList');
+
+// Send message function - GLOBAL
+window.sendMessage = function() {
+    console.log('🎯 sendMessage() called');
+    
+    const messageInput = document.getElementById('messageInput');
+    if (!messageInput) {
+        console.log('❌ No message input found');
+        return;
+    }
+    
+    if (!currentChatUser) {
+        alert('Please select a user to chat with first');
+        return;
+    }
+    
+    const content = messageInput.value.trim();
+    if (!content) {
+        console.log('❌ No message content');
+        return;
+    }
+    
+    console.log('💬 Sending message to:', currentChatUser.name, 'Content:', content);
+    
+    // Send to Supabase
+    supabase.from('messages').insert([{
+        content: content,
+        sender_id: currentUser.id,
+        receiver_id: currentChatUser.id,
+        created_at: new Date()
+    }]).then(({ error }) => {
+        if (error) {
+            console.error('❌ Error sending message:', error);
+            alert('Error sending message: ' + error.message);
+        } else {
+            console.log('✅ Message sent successfully');
+            // Clear input
+            messageInput.value = '';
             
-            assignmentsList.style.display = 'block';
-            assignmentsContent.innerHTML = '';
+            // Immediately display the sent message
+            window.displayMessage({
+                content: content,
+                sender_id: currentUser.id,
+                receiver_id: currentChatUser.id,
+                created_at: new Date()
+            });
+            window.scrollChatToBottom();
+        }
+    });
+}
+
+// Scroll chat to bottom - GLOBAL
+window.scrollChatToBottom = function() {
+    const container = document.getElementById('chatMessages');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+// Initialize chat - GLOBAL
+window.initializeChat = function() {
+    console.log('🔧 Setting up chat system...');
+    
+    // DIRECT approach: Set onclick directly
+    const sendButton = document.getElementById('sendMessage');
+    if (sendButton) {
+        console.log('🟢 Found send button, setting direct onclick');
+        sendButton.onclick = window.sendMessage;
+    } else {
+        console.log('❌ Send button not found');
+    }
+    
+    // Enter key listener
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                window.sendMessage();
+            }
+        };
+    }
+    
+    console.log('✅ Chat system setup complete');
+}
+            // Load section data
+            const sectionHandlers = {
+                'dashboard': () => { console.log('📊 Loading dashboard'); loadDashboardData(); },
+                'notes': () => { console.log('📝 Loading notes'); loadNotes(); },
+                'assignments': () => { console.log('📋 Loading assignments'); loadAssignments(); },
+                'past-questions': () => { console.log('📚 Loading past questions'); loadPastQuestions(); },
+                'chat': () => { console.log('💬 Loading chat'); loadOnlineUsers(); },
+                'profile': () => { console.log('👤 Loading profile'); loadUserContributions(); }
+            };
+            
+            if (sectionHandlers[sectionId]) {
+                sectionHandlers[sectionId]();
+            }
+        }
+
+        function updateBottomNav(activeItem) {
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            activeItem.classList.add('active');
+        }
+
+        function updateBottomNavForSection(sectionId) {
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-section') === sectionId) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+
+        // Real-time Subscriptions
+        // Real-time Subscriptions - ENHANCED
+function setupRealtimeSubscriptions() {
+    if (!currentUser) return;
+    
+    console.log('🔔 Setting up real-time subscriptions');
+    
+    // Chat subscription - ENHANCED
+    chatSubscription = supabase
+        .channel('chat-messages')
+        .on('postgres_changes', 
+            { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'messages',
+                filter: `receiver_id=eq.${currentUser.id}`
+            }, 
+            (payload) => {
+                console.log('💬 Real-time message received:', payload);
+                
+                // Always display the message if it's from the current chat user
+                if (currentChatUser && payload.new.sender_id === currentChatUser.id) {
+                    displayMessage(payload.new);
+                    scrollChatToBottom();
+                }
+                
+                // Also show notification for new messages from other users
+                if (!currentChatUser || payload.new.sender_id !== currentChatUser.id) {
+                    showNotification(`New message from user!`);
+                }
+                // In your switchSection function, update the chat case:
+else if (sectionId === 'chat') {
+    console.log('💬 Loading chat');
+    window.loadOnlineUsers();
+    // Force re-initialize chat after a short delay
+    setTimeout(() => {
+        console.log('🔄 Re-initializing chat...');
+        window.initializeChat();
+    }, 1000);
+}
+            }
+        )
+        .subscribe((status) => {
+            console.log('📡 Chat subscription status:', status);
+        });
+}
+
+        function handleRealtimeUpdate(type, payload) {
+            // Show new item indicator
+            if (payload.eventType === 'INSERT') {
+                showNewItemIndicator(type);
+            }
+            
+            // Refresh the relevant section
+            switch(type) {
+                case 'notes':
+                    if (document.getElementById('notes').classList.contains('active')) {
+                        loadNotes();
+                    }
+                    loadRecentNotes();
+                    loadUserContributions();
+                    break;
+                case 'assignments':
+                    if (document.getElementById('assignments').classList.contains('active')) {
+                        loadAssignments();
+                    }
+                    loadUpcomingAssignments();
+                    loadUserContributions();
+                    break;
+                case 'pastQuestions':
+                    if (document.getElementById('past-questions').classList.contains('active')) {
+                        loadPastQuestions();
+                    }
+                    loadUserContributions();
+                    break;
+            }
+        }
+
+        function showNewItemIndicator(type) {
+            const indicators = {
+                'notes': { section: 'notes', text: 'New Note' },
+                'assignments': { section: 'assignments', text: 'New Assignment' },
+                'pastQuestions': { section: 'past-questions', text: 'New Past Question' }
+            };
+            
+            if (indicators[type]) {
+                const indicator = document.createElement('span');
+                indicator.className = 'new-item-indicator';
+                indicator.textContent = indicators[type].text;
+                indicator.style.animation = 'slideIn 0.5s ease';
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                }, 3000);
+                
+                // Add to current active section header if matching
+                const activeSection = document.querySelector('.section.active h2');
+                if (activeSection && activeSection.textContent.includes(indicators[type].text.split(' ')[1])) {
+                    activeSection.appendChild(indicator);
+                }
+            }
+        }
+
+        function showNotification(message) {
+            // Create a simple notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-info alert-dismissible fade show position-fixed';
+            notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Data Loading Functions
+        async function loadDashboardData() {
+            await loadRecentNotes();
+            await loadUpcomingAssignments();
+        }
+
+        async function loadRecentNotes() {
+            const container = document.getElementById('recentNotesContent');
+            if (!container) return;
             
             try {
-                const { data: assignments, error } = await supabase
-                    .from('assignments')
+                const { data, error } = await supabase
+                    .from('notes')
                     .select('*')
-                    .eq('user_id', userId)
-                    .order('due_date', { ascending: true });
+                    .order('created_at', { ascending: false })
+                    .limit(5);
                 
                 if (error) throw error;
                 
-                assignmentsList.style.display = 'none';
-                
-                if (!assignments || assignments.length === 0) {
-                    assignmentsContent.innerHTML = `
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
                         <div class="empty-state">
-                            <i class="fas fa-tasks"></i>
-                            <h5>No Assignments Yet</h5>
-                            <p>Add your first assignment to get started!</p>
+                            <i class="fas fa-sticky-note"></i>
+                            <p>No notes yet</p>
+                            <small class="text-muted">Add your first note to get started</small>
                         </div>
                     `;
                     return;
                 }
                 
-                assignmentsContent.innerHTML = '';
-                assignments.forEach(assignment => {
-                    const assignmentElement = createAssignmentElement(assignment.id, assignment);
-                    assignmentsContent.appendChild(assignmentElement);
-                });
+                container.innerHTML = data.map(note => `
+                    <div class="list-item">
+                        <div class="list-item-title">${escapeHtml(note.title)}</div>
+                        <div class="list-item-meta">${escapeHtml(note.course)} • ${formatDate(note.created_at)}</div>
+                    </div>
+                `).join('');
+                
             } catch (error) {
-                assignmentsList.style.display = 'none';
-                assignmentsContent.innerHTML = `<div class="alert alert-danger">Error loading assignments: ${error.message}</div>`;
+                container.innerHTML = '<p class="text-danger">Error loading notes</p>';
             }
         }
 
-        // Load past questions - REAL FUNCTION
-        async function loadPastQuestions(userId) {
-            const pastQuestionsContent = document.getElementById('pastQuestionsContent');
-            const pastQuestionsList = document.getElementById('pastQuestionsList');
-            
-            pastQuestionsList.style.display = 'block';
-            pastQuestionsContent.innerHTML = '';
+        async function loadUpcomingAssignments() {
+            const container = document.getElementById('upcomingAssignmentsContent');
+            if (!container) return;
             
             try {
-                const { data: pastQuestions, error } = await supabase
-                    .from('past_questions')
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                
+                const { data, error } = await supabase
+                    .from('assignments')
                     .select('*')
-                    .eq('user_id', userId)
+                    .gte('due_date', tomorrowStr)
+                    .order('due_date', { ascending: true })
+                    .limit(5);
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-tasks"></i>
+                            <p>No upcoming assignments</p>
+                            <small class="text-muted">All caught up!</small>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = data.map(assignment => `
+                    <div class="list-item">
+                        <div class="list-item-title">${escapeHtml(assignment.title)}</div>
+                        <div class="list-item-meta">${escapeHtml(assignment.course)} • Due: ${formatDate(assignment.due_date)}</div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                container.innerHTML = '<p class="text-danger">Error loading assignments</p>';
+            }
+        }
+
+        async function loadNotes() {
+            const container = document.getElementById('notesContent');
+            if (!container) return;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('notes')
+                    .select('*')
                     .order('created_at', { ascending: false });
                 
                 if (error) throw error;
                 
-                pastQuestionsList.style.display = 'none';
-                
-                if (!pastQuestions || pastQuestions.length === 0) {
-                    pastQuestionsContent.innerHTML = `
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
                         <div class="empty-state">
-                            <i class="fas fa-file-alt"></i>
-                            <h5>No Past Questions Yet</h5>
-                            <p>Add your first past question to get started!</p>
+                            <i class="fas fa-sticky-note"></i>
+                            <h5>No Notes Yet</h5>
+                            <p>Start by sharing your first lecture note with classmates</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                                <i class="fas fa-plus me-2"></i>Add Your First Note
+                            </button>
                         </div>
                     `;
                     return;
                 }
                 
-                pastQuestionsContent.innerHTML = '';
-                pastQuestions.forEach(pastQuestion => {
-                    const pastQuestionElement = createPastQuestionElement(pastQuestion.id, pastQuestion);
-                    pastQuestionsContent.appendChild(pastQuestionElement);
-                });
+                container.innerHTML = data.map(note => `
+                    <div class="list-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="list-item-title">${escapeHtml(note.title)}</div>
+                                <div class="list-item-meta">${escapeHtml(note.course)} • ${formatDate(note.created_at)}</div>
+                                <p class="mt-2">${escapeHtml(note.content)}</p>
+                            </div>
+                            ${note.user_id === currentUser?.id ? `
+                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteNote('${note.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
             } catch (error) {
-                pastQuestionsList.style.display = 'none';
-                pastQuestionsContent.innerHTML = `<div class="alert alert-danger">Error loading past questions: ${error.message}</div>`;
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>Error loading notes</h5>
+                        <p class="mb-0">${error.message}</p>
+                    </div>
+                `;
             }
         }
 
-        // Load dashboard data
-        async function loadDashboardData(userId) {
-            // Load recent notes
-            const recentNotesContent = document.getElementById('recentNotesContent');
-            const recentNotesList = document.getElementById('recentNotesList');
-            
-            recentNotesList.style.display = 'block';
-            recentNotesContent.innerHTML = '';
+        async function loadAssignments() {
+            const container = document.getElementById('assignmentsContent');
+            if (!container) return;
             
             try {
-                const { data: notes, error } = await supabase
-                    .from('notes')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false })
-                    .limit(3);
-                
-                if (error) throw error;
-                
-                recentNotesList.style.display = 'none';
-                
-                if (!notes || notes.length === 0) {
-                    recentNotesContent.innerHTML = '<p class="text-muted">No notes yet. Add your first note!</p>';
-                    return;
-                }
-                
-                notes.forEach(note => {
-                    const noteElement = createNoteElement(note.id, note);
-                    recentNotesContent.appendChild(noteElement);
-                });
-            } catch (error) {
-                recentNotesList.style.display = 'none';
-                recentNotesContent.innerHTML = '<p class="text-muted">Error loading recent notes</p>';
-            }
-            
-            // Load upcoming assignments
-            const upcomingAssignmentsContent = document.getElementById('upcomingAssignmentsContent');
-            const upcomingAssignmentsList = document.getElementById('upcomingAssignmentsList');
-            
-            upcomingAssignmentsList.style.display = 'block';
-            upcomingAssignmentsContent.innerHTML = '';
-            
-            const today = new Date().toISOString().split('T')[0];
-            
-            try {
-                const { data: assignments, error } = await supabase
+                const { data, error } = await supabase
                     .from('assignments')
                     .select('*')
-                    .eq('user_id', userId)
-                    .gte('due_date', today)
-                    .order('due_date', { ascending: true })
-                    .limit(3);
+                    .order('due_date', { ascending: true });
                 
                 if (error) throw error;
                 
-                upcomingAssignmentsList.style.display = 'none';
-                
-                if (!assignments || assignments.length === 0) {
-                    upcomingAssignmentsContent.innerHTML = '<p class="text-muted">No upcoming assignments. Great job!</p>';
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-tasks"></i>
+                            <h5>No Assignments Yet</h5>
+                            <p>Track your assignments and deadlines here</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
+                                <i class="fas fa-plus me-2"></i>Add Your First Assignment
+                            </button>
+                        </div>
+                    `;
                     return;
                 }
                 
-                assignments.forEach(assignment => {
-                    const assignmentElement = createAssignmentElement(assignment.id, assignment);
-                    upcomingAssignmentsContent.appendChild(assignmentElement);
-                });
+                container.innerHTML = data.map(assignment => `
+                    <div class="list-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="list-item-title">${escapeHtml(assignment.title)}</div>
+                                <div class="list-item-meta">${escapeHtml(assignment.course)} • Due: ${formatDate(assignment.due_date)}</div>
+                                <p class="mt-2">${escapeHtml(assignment.description)}</p>
+                            </div>
+                            ${assignment.user_id === currentUser?.id ? `
+                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteAssignment('${assignment.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
             } catch (error) {
-                upcomingAssignmentsList.style.display = 'none';
-                upcomingAssignmentsContent.innerHTML = '<p class="text-muted">Error loading upcoming assignments</p>';
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>Error loading assignments</h5>
+                        <p class="mb-0">${error.message}</p>
+                    </div>
+                `;
             }
+        }
+
+        async function loadPastQuestions() {
+            const container = document.getElementById('pastQuestionsContent');
+            if (!container) return;
             
-            // Load user contribution counts
             try {
-                const [notesCount, assignmentsCount, pastQuestionsCount] = await Promise.all([
-                    supabase.from('notes').select('id', { count: 'exact' }).eq('user_id', userId),
-                    supabase.from('assignments').select('id', { count: 'exact' }).eq('user_id', userId),
-                    supabase.from('past_questions').select('id', { count: 'exact' }).eq('user_id', userId)
-                ]);
-                
-                document.getElementById('myNotesCount').textContent = notesCount.count || 0;
-                document.getElementById('myAssignmentsCount').textContent = assignmentsCount.count || 0;
-                document.getElementById('myPastQuestionsCount').textContent = pastQuestionsCount.count || 0;
-            } catch (error) {
-                console.error('Error loading counts:', error);
-            }
-        }
-
-        // ========== DELETE FUNCTIONS ==========
-        
-        // Delete functions
-        async function deleteNote(id) {
-            if (confirm('Are you sure you want to delete this note?')) {
-                try {
-                    const { error } = await supabase
-                        .from('notes')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) throw error;
-                    
-                    // Reload notes for current user
-                    const user = (await supabase.auth.getUser()).data.user;
-                    if (user) loadNotes(user.id);
-                } catch (error) {
-                    alert('Error deleting note: ' + error.message);
-                }
-            }
-        }
-
-        async function deleteAssignment(id) {
-            if (confirm('Are you sure you want to delete this assignment?')) {
-                try {
-                    const { error } = await supabase
-                        .from('assignments')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) throw error;
-                    
-                    // Reload assignments for current user
-                    const user = (await supabase.auth.getUser()).data.user;
-                    if (user) loadAssignments(user.id);
-                } catch (error) {
-                    alert('Error deleting assignment: ' + error.message);
-                }
-            }
-        }
-
-        async function deletePastQuestion(id) {
-            if (confirm('Are you sure you want to delete this past question?')) {
-                try {
-                    const { error } = await supabase
-                        .from('past_questions')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) throw error;
-                    
-                    // Reload past questions for current user
-                    const user = (await supabase.auth.getUser()).data.user;
-                    if (user) loadPastQuestions(user.id);
-                } catch (error) {
-                    alert('Error deleting past question: ' + error.message);
-                }
-            }
-        }
-
-        // ========== SAVE FUNCTIONS ==========
-        
-        // Save note - SHARED VERSION
-document.getElementById('saveNoteBtn').addEventListener('click', async () => {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-        alert('Please log in to save notes');
-        return;
-    }
-    
-    // Get user's department from profile
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('department')
-        .eq('id', user.id)
-        .single();
-    
-    const title = document.getElementById('noteTitle').value;
-    const course = document.getElementById('noteCourse').value;
-    const content = document.getElementById('noteContent').value;
-    const file = document.getElementById('noteFile').files[0];
-    
-    // Basic validation
-    if (!title || !course || !content) {
-        alert('Please fill in all required fields');
-        return;
-    }
-    
-    const noteData = {
-        user_id: user.id,
-        user_department: profile?.department, // Add department for sharing
-        title: title,
-        course: course,
-        content: content
-    };    
-            try {
-                if (file) {
-                    // Upload file to Supabase Storage
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-                    const { error: uploadError } = await supabase.storage
-                        .from('notes')
-                        .upload(fileName, file);
-                    
-                    if (uploadError) throw uploadError;
-                    
-                    // Get public URL
-                    const { data: urlData } = supabase.storage
-                        .from('notes')
-                        .getPublicUrl(fileName);
-                    
-                    noteData.file_url = urlData.publicUrl;
-                }
-                
-                // Save note to database
-                const { error } = await supabase
-                    .from('notes')
-                    .insert([noteData]);
+                const { data, error } = await supabase
+                    .from('past_questions')
+                    .select('*')
+                    .order('year', { ascending: false });
                 
                 if (error) throw error;
                 
-                // Reset form and close modal
-                document.getElementById('addNoteForm').reset();
-                bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <h5>No Past Questions Yet</h5>
+                            <p>Share past exam questions to help your classmates</p>
+                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
+                                <i class="fas fa-plus me-2"></i>Add Your First Past Question
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
                 
-                // Show success message
-                alert('Note saved successfully!');
+                container.innerHTML = data.map(pq => `
+                    <div class="list-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="list-item-title">${escapeHtml(pq.title)}</div>
+                                <div class="list-item-meta">${escapeHtml(pq.course)} • ${pq.year}</div>
+                            </div>
+                            ${pq.user_id === currentUser?.id ? `
+                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deletePastQuestion('${pq.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
                 
-                // Reload notes
-                loadNotes(user.id);
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>Error loading past questions</h5>
+                        <p class="mb-0">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Data Creation Functions
+        async function saveNote() {
+            const title = document.getElementById('noteTitle');
+            const course = document.getElementById('noteCourse');
+            const content = document.getElementById('noteContent');
+            
+            if (!title || !course || !content) return;
+            
+            try {
+                const { error } = await supabase.from('notes').insert([{
+                    title: title.value,
+                    course: course.value,
+                    content: content.value,
+                    user_id: currentUser.id,
+                    created_at: new Date()
+                }]);
+                
+                if (error) throw error;
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addNoteModal'));
+                if (modal) modal.hide();
+                
+                const addNoteForm = document.getElementById('addNoteForm');
+                if (addNoteForm) addNoteForm.reset();
+                
+                // Clear file preview
+                const noteFilesPreview = document.getElementById('noteFilesPreview');
+                if (noteFilesPreview) noteFilesPreview.innerHTML = '';
+                
+                // Real-time update will handle the refresh
+                
             } catch (error) {
                 alert('Error saving note: ' + error.message);
             }
-        });
+        }
 
-        // Save assignment - REAL FUNCTION
-        document.getElementById('saveAssignmentBtn').addEventListener('click', async () => {
-            const user = (await supabase.auth.getUser()).data.user;
-            if (!user) {
-                alert('Please log in to save assignments');
-                return;
-            }
+        async function saveAssignment() {
+            const title = document.getElementById('assignmentTitle');
+            const course = document.getElementById('assignmentCourse');
+            const description = document.getElementById('assignmentDescription');
+            const dueDate = document.getElementById('assignmentDueDate');
             
-            const title = document.getElementById('assignmentTitle').value;
-            const course = document.getElementById('assignmentCourse').value;
-            const description = document.getElementById('assignmentDescription').value;
-            const dueDate = document.getElementById('assignmentDueDate').value;
-            const file = document.getElementById('assignmentFile').files[0];
-            
-            // Basic validation
-            if (!title || !course || !description || !dueDate) {
-                alert('Please fill in all required fields');
-                return;
-            }
-            
-            const assignmentData = {
-                user_id: user.id,
-                title: title,
-                course: course,
-                description: description,
-                due_date: dueDate
-            };
+            if (!title || !course || !description || !dueDate) return;
             
             try {
-                if (file) {
-                    // Upload file to Supabase Storage
-                    const fileExt = file.name.split('.').pop();
-                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-                    const { error: uploadError } = await supabase.storage
-                        .from('assignments')
-                        .upload(fileName, file);
-                    
-                    if (uploadError) throw uploadError;
-                    
-                    // Get public URL
-                    const { data: urlData } = supabase.storage
-                        .from('assignments')
-                        .getPublicUrl(fileName);
-                    
-                    assignmentData.file_url = urlData.publicUrl;
-                }
-                
-                // Save assignment to database
-                const { error } = await supabase
-                    .from('assignments')
-                    .insert([assignmentData]);
+                const { error } = await supabase.from('assignments').insert([{
+                    title: title.value,
+                    course: course.value,
+                    description: description.value,
+                    due_date: dueDate.value,
+                    user_id: currentUser.id,
+                    created_at: new Date()
+                }]);
                 
                 if (error) throw error;
                 
-                // Reset form and close modal
-                document.getElementById('addAssignmentForm').reset();
-                bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal')).hide();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal'));
+                if (modal) modal.hide();
                 
-                // Show success message
-                alert('Assignment saved successfully!');
+                const addAssignmentForm = document.getElementById('addAssignmentForm');
+                if (addAssignmentForm) addAssignmentForm.reset();
                 
-                // Reload assignments
-                loadAssignments(user.id);
+                // Clear file preview
+                const assignmentFilesPreview = document.getElementById('assignmentFilesPreview');
+                if (assignmentFilesPreview) assignmentFilesPreview.innerHTML = '';
+                
+                // Real-time update will handle the refresh
+                
             } catch (error) {
                 alert('Error saving assignment: ' + error.message);
             }
-        });
+        }
 
-        // Save past question - REAL FUNCTION
-        document.getElementById('savePastQuestionBtn').addEventListener('click', async () => {
-            const user = (await supabase.auth.getUser()).data.user;
-            if (!user) {
-                alert('Please log in to save past questions');
-                return;
-            }
+        async function savePastQuestion() {
+            const title = document.getElementById('pastQuestionTitle');
+            const course = document.getElementById('pastQuestionCourse');
+            const year = document.getElementById('pastQuestionYear');
             
-            const title = document.getElementById('pastQuestionTitle').value;
-            const course = document.getElementById('pastQuestionCourse').value;
-            const year = document.getElementById('pastQuestionYear').value;
-            const file = document.getElementById('pastQuestionFile').files[0];
-            
-            // Basic validation
-            if (!title || !course || !year || !file) {
-                alert('Please fill in all required fields');
-                return;
-            }
+            if (!title || !course || !year) return;
             
             try {
-                // Upload file to Supabase Storage
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('past-questions')
-                    .upload(fileName, file);
-                
-                if (uploadError) throw uploadError;
-                
-                // Get public URL
-                const { data: urlData } = supabase.storage
-                    .from('past-questions')
-                    .getPublicUrl(fileName);
-                
-                // Save past question to database
-                const { error } = await supabase
-                    .from('past_questions')
-                    .insert([{
-                        user_id: user.id,
-                        title: title,
-                        course: course,
-                        year: year,
-                        file_url: urlData.publicUrl
-                    }]);
+                const { error } = await supabase.from('past_questions').insert([{
+                    title: title.value,
+                    course: course.value,
+                    year: year.value,
+                    user_id: currentUser.id,
+                    created_at: new Date()
+                }]);
                 
                 if (error) throw error;
                 
-                // Reset form and close modal
-                document.getElementById('addPastQuestionForm').reset();
-                bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal')).hide();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal'));
+                if (modal) modal.hide();
                 
-                // Show success message
-                alert('Past question saved successfully!');
+                const addPastQuestionForm = document.getElementById('addPastQuestionForm');
+                if (addPastQuestionForm) addPastQuestionForm.reset();
                 
-                // Reload past questions
-                loadPastQuestions(user.id);
+                // Clear file preview
+                const pastQuestionFilePreview = document.getElementById('pastQuestionFilePreview');
+                if (pastQuestionFilePreview) pastQuestionFilePreview.innerHTML = '';
+                
+                // Real-time update will handle the refresh
+                
             } catch (error) {
                 alert('Error saving past question: ' + error.message);
             }
-        });
-
-        // ========== AUTH AND NAVIGATION FUNCTIONS ==========
-        
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('CampusNote app initialized');
-            setupNavigation();
-            setupAuthEventListeners();
-            
-            // Test Supabase connection - MOVED HERE to ensure supabase is initialized
-            testSupabaseConnection();
-            checkAuthState();
-        });
-
-        // Test if Supabase is connected - MOVED AFTER initialization
-        async function testSupabaseConnection() {
-            try {
-                const { data, error } = await supabase.from('profiles').select('count');
-                if (error) {
-                    console.log('Supabase connected but tables might not exist:', error.message);
-                } else {
-                    console.log('Supabase connected successfully!');
-                }
-            } catch (error) {
-                console.log('Supabase connection test:', error.message);
-            }
         }
 
-        // Setup navigation
-        function setupNavigation() {
-            console.log('Setting up navigation...');
-            
-            document.querySelectorAll('.nav-link, [data-section]').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetSection = link.getAttribute('data-section');
-                    
-                    if (targetSection) {
-                        console.log('Navigating to:', targetSection);
-                        
-                        // Update active nav link
-                        navLinks.forEach(navLink => {
-                            navLink.classList.remove('active');
-                        });
-                        link.classList.add('active');
-                        
-                        // Show target section
-                        sections.forEach(section => {
-                            section.classList.remove('active');
-                        });
-                        
-                        const targetElement = document.getElementById(targetSection);
-                        if (targetElement) {
-                            targetElement.classList.add('active');
-                        } else {
-                            console.error('Section not found:', targetSection);
-                        }
-                    }
-                });
-            });
-            
-            console.log('Navigation setup complete');
-        }
-
-        // Setup authentication event listeners
-        function setupAuthEventListeners() {
-            console.log('Setting up auth event listeners...');
-            
-            // Auth form toggling
-            showSignup.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Show signup clicked');
-                loginForm.style.display = 'none';
-                signupForm.style.display = 'block';
-            });
-
-            showLogin.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Show login clicked');
-                signupForm.style.display = 'none';
-                loginForm.style.display = 'block';
-            });
-
-            // Navigation auth buttons
-            loginBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Login button clicked');
-                authSection.classList.add('active');
-                document.getElementById('dashboard').classList.remove('active');
-                loginForm.style.display = 'block';
-                signupForm.style.display = 'none';
-                
-                // Update navigation
-                navLinks.forEach(navLink => navLink.classList.remove('active'));
-                document.querySelector('[data-section="dashboard"]').classList.add('active');
-            });
-
-            signupBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Signup button clicked');
-                authSection.classList.add('active');
-                document.getElementById('dashboard').classList.remove('active');
-                signupForm.style.display = 'block';
-                loginForm.style.display = 'none';
-                
-                // Update navigation
-                navLinks.forEach(navLink => navLink.classList.remove('active'));
-                document.querySelector('[data-section="dashboard"]').classList.add('active');
-            });
-
-            // Login form submission
-            loginFormElement.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                console.log('Login form submitted');
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                const loginError = document.getElementById('loginError');
-                
-                try {
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email: email,
-                        password: password
-                    });
-                    
-                    if (error) throw error;
-                    
-                    // Login successful
-                    loginError.style.display = 'none';
-                    console.log('Login successful');
-                } catch (error) {
-                    console.error('Login error:', error);
-                    loginError.textContent = error.message;
-                    loginError.style.display = 'block';
-                }
-            });
-
-            // Signup form submission
-            signupFormElement.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                console.log('Signup form submitted');
-                const name = document.getElementById('signupName').value;
-                const email = document.getElementById('signupEmail').value;
-                const password = document.getElementById('signupPassword').value;
-                const level = document.getElementById('signupLevel').value;
-                const department = document.getElementById('signupDepartment').value;
-                const signupError = document.getElementById('signupError');
-                
-                try {
-                    const { data, error } = await supabase.auth.signUp({
-                        email: email,
-                        password: password,
-                        options: {
-                            data: {
-                                full_name: name,
-                                academic_level: level,
-                                department: department
-                            }
-                        }
-                    });
-                    
-                    if (error) throw error;
-                    
-                    // Signup successful
-                    signupError.style.display = 'none';
-                    alert('Account created successfully! Please check your email for verification.');
-                    console.log('Signup successful');
-                } catch (error) {
-                    console.error('Signup error:', error);
-                    signupError.textContent = error.message;
-                    signupError.style.display = 'block';
-                }
-            });
-
-            // Logout
-            logoutBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                console.log('Logout clicked');
-                const { error } = await supabase.auth.signOut();
-                if (error) console.error('Logout error:', error);
-            });
-
-            console.log('Auth event listeners setup complete');
-        }
-
-        // Check initial auth state
-        async function checkAuthState() {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (session) {
-                    console.log('User already logged in');
-                    handleUserLoggedIn(session.user);
-                } else {
-                    console.log('No user logged in');
-                    handleUserLoggedOut();
-                }
-            } catch (error) {
-                console.log('Error checking auth state:', error);
-                handleUserLoggedOut();
-            }
-        }
-
-        // Auth state observer
-        supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event);
-            
-            if (session?.user) {
-                handleUserLoggedIn(session.user);
-            } else {
-                handleUserLoggedOut();
-            }
-        });
-
-        function handleUserLoggedIn(user) {
-            console.log('User logged in:', user.id);
-            authSection.classList.remove('active');
-            document.getElementById('dashboard').classList.add('active');
-            userDropdown.style.display = 'block';
-            authButtons.style.display = 'none';
-            
-            // Update navigation
-            navLinks.forEach(navLink => navLink.classList.remove('active'));
-            document.querySelector('[data-section="dashboard"]').classList.add('active');
-            
-            // Load user data
-            loadUserProfile(user.id);
-            loadUserContent(user.id);
-        }
-
-        function handleUserLoggedOut() {
-            console.log('User logged out');
-            authSection.classList.add('active');
-            userDropdown.style.display = 'none';
-            authButtons.style.display = 'flex';
-            loginForm.style.display = 'block';
-            signupForm.style.display = 'none';
-            
-            // Update navigation
-            navLinks.forEach(navLink => navLink.classList.remove('active'));
-            document.querySelector('[data-section="dashboard"]').classList.remove('active');
-        }
-
-        // Load user profile
-        async function loadUserProfile(userId) {
-            try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', userId)
-                    .single();
-                
-                if (error) throw error;
-                
-                if (data) {
-                    displayUserInfo(data);
-                }
-            } catch (error) {
-                console.error('Error loading profile:', error);
-            }
-        }
-
-        // Display user information
-        function displayUserInfo(userData) {
-            const name = userData.full_name || 'User';
-            const level = userData.academic_level || 'Not set';
-            const department = userData.department || 'Not set';
-            const email = userData.email || '';
-            
-            // Get initials for avatar
-            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
-            
-            // Update UI elements
-            userName.textContent = name;
-            userInitials.textContent = initials;
-            welcomeUser.textContent = `Hello, ${name}!`;
-            
-            // Update profile section
-            document.getElementById('profileName').textContent = name;
-            document.getElementById('profileLevel').textContent = level;
-            document.getElementById('profileDepartment').textContent = department;
-            document.getElementById('profileEmail').textContent = email;
-            document.getElementById('profileAvatar').textContent = initials;
-            
-            // Set form values
-            document.getElementById('editName').value = name;
-            document.getElementById('editLevel').value = level;
-            document.getElementById('editDepartment').value = department;
-        }
-
-        // Load user content from Supabase
-        function loadUserContent(userId) {
-            loadNotes(userId);
-            loadAssignments(userId);
-            loadPastQuestions(userId);
-            loadDashboardData(userId);
-        }
-
-        // Profile form submission
-        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        // Profile Management - FIXED: Remove updated_at field
+        async function updateProfile(e) {
             e.preventDefault();
-            const user = (await supabase.auth.getUser()).data.user;
-            if (!user) return;
             
-            const name = document.getElementById('editName').value;
-            const level = document.getElementById('editLevel').value;
-            const department = document.getElementById('editDepartment').value;
+            const name = document.getElementById('editName');
+            const level = document.getElementById('editLevel');
+            const department = document.getElementById('editDepartment');
+            
+            if (!name || !level || !department) return;
             
             try {
                 const { error } = await supabase
                     .from('profiles')
                     .update({
-                        full_name: name,
-                        academic_level: level,
-                        department: department,
-                        updated_at: new Date().toISOString()
+                        name: name.value,
+                        level: level.value,
+                        department: department.value
+                        // Removed updated_at since it doesn't exist in your schema
                     })
-                    .eq('id', user.id);
+                    .eq('id', currentUser.id);
                 
                 if (error) throw error;
                 
-                // Update UI with new user info
-                displayUserInfo({ 
-                    full_name: name, 
-                    academic_level: level, 
-                    department: department, 
-                    email: user.email 
-                });
+                await loadUserProfile();
                 alert('Profile updated successfully!');
             } catch (error) {
                 alert('Error updating profile: ' + error.message);
             }
+        }
+
+        async function loadUserContributions() {
+            if (!currentUser) return;
+            
+            try {
+                const { count: notesCount } = await supabase
+                    .from('notes')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', currentUser.id);
+                
+                const { count: assignmentsCount } = await supabase
+                    .from('assignments')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', currentUser.id);
+                
+                const { count: pastQuestionsCount } = await supabase
+                    .from('past_questions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', currentUser.id);
+                
+                const myNotesCount = document.getElementById('myNotesCount');
+                const myAssignmentsCount = document.getElementById('myAssignmentsCount');
+                const myPastQuestionsCount = document.getElementById('myPastQuestionsCount');
+                
+                if (myNotesCount) myNotesCount.textContent = notesCount || 0;
+                if (myAssignmentsCount) myAssignmentsCount.textContent = assignmentsCount || 0;
+                if (myPastQuestionsCount) myPastQuestionsCount.textContent = pastQuestionsCount || 0;
+            } catch (error) {
+                console.error('Error loading user contributions:', error);
+            }
+        }
+
+        // Delete Functions
+        window.deleteNote = async function(noteId) {
+            if (!confirm('Are you sure you want to delete this note?')) return;
+            try {
+                const { error } = await supabase
+                    .from('notes')
+                    .delete()
+                    .eq('id', noteId)
+                    .eq('user_id', currentUser.id);
+                if (error) throw error;
+                // Real-time will handle the refresh
+            } catch (error) {
+                alert('Error deleting note: ' + error.message);
+            }
+        };
+
+        window.deleteAssignment = async function(assignmentId) {
+            if (!confirm('Are you sure you want to delete this assignment?')) return;
+            try {
+                const { error } = await supabase
+                    .from('assignments')
+                    .delete()
+                    .eq('id', assignmentId)
+                    .eq('user_id', currentUser.id);
+                if (error) throw error;
+                // Real-time will handle the refresh
+            } catch (error) {
+                alert('Error deleting assignment: ' + error.message);
+            }
+        };
+
+        window.deletePastQuestion = async function(pastQuestionId) {
+            if (!confirm('Are you sure you want to delete this past question?')) return;
+            try {
+                const { error } = await supabase
+                    .from('past_questions')
+                    .delete()
+                    .eq('id', pastQuestionId)
+                    .eq('user_id', currentUser.id);
+                if (error) throw error;
+                // Real-time will handle the refresh
+            } catch (error) {
+                alert('Error deleting past question: ' + error.message);
+            }
+        };
+
+        // Utility Functions
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        function formatTime(dateString) {
+            const options = { hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleTimeString(undefined, options);
+        }
+
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return unsafe;
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Sample Data Function
+        window.addSampleData = async function() {
+            try {
+                // Add sample notes
+                await supabase.from('notes').insert([
+                    {
+                        title: 'Introduction to Programming',
+                        course: 'CSC 101',
+                        content: 'Programming basics including variables, loops, and functions.',
+                        user_id: currentUser.id,
+                        created_at: new Date()
+                    }
+                ]);
+
+                // Add sample assignment
+                await supabase.from('assignments').insert([
+                    {
+                        title: 'Programming Assignment 1',
+                        course: 'CSC 101',
+                        description: 'Create a simple calculator program.',
+                        due_date: '2024-12-31',
+                        user_id: currentUser.id,
+                        created_at: new Date()
+                    }
+                ]);
+
+                // Add sample past question
+                await supabase.from('past_questions').insert([
+                    {
+                        title: '2023 Final Exam',
+                        course: 'CSC 101',
+                        year: '2023',
+                        user_id: currentUser.id,
+                        created_at: new Date()
+                    }
+                ]);
+
+                console.log('✅ Sample data added!');
+                alert('Sample data added! The real-time system will update the views automatically.');
+                
+            } catch (error) {
+                console.error('❌ Error adding sample data:', error);
+                alert('Error: ' + error.message);
+            }
+        };
+
+        // Window resize handler
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 768) {
+                setupMobileNavigation();
+            } else {
+                const authButtons = document.getElementById('authButtons');
+                if (authButtons && authButtons.classList.contains('dropdown')) {
+                    authButtons.classList.remove('dropdown');
+                    authButtons.innerHTML = `
+                        <button class="btn btn-outline-light me-2" id="loginBtn">Login</button>
+                        <button class="btn btn-light" id="signupBtn">Sign Up</button>
+                    `;
+                    const loginBtn = document.getElementById('loginBtn');
+                    const signupBtn = document.getElementById('signupBtn');
+                    if (loginBtn) loginBtn.addEventListener('click', showLoginForm);
+                    if (signupBtn) signupBtn.addEventListener('click', showSignupForm);
+                }
+            }
         });
 
+        console.log('🎉 CampusNote Real-time Platform Ready!');
     </script>
 </body>
 </html>

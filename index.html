@@ -125,6 +125,38 @@
             margin-bottom: 30px; /* Increased margin */
             text-align: center;
         }
+        /* File attachment styles */
+.file-attachment {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+.file-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+.file-preview-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+
+/* Download button styles */
+.btn-outline-success {
+    border-color: #198754;
+    color: #198754;
+}
+
+.btn-outline-success:hover {
+    background-color: #198754;
+    color: white;
+}
         
         /* Cards */
         .card {
@@ -527,7 +559,7 @@
         </div>
 
         <!-- Dashboard Section -->
-        <div id="dashboard" class="section">
+        <div id="dashboard" class="section pt-5 pt-md-3 pb-5">
             <div class="hero-section">
                 <div class="container text-center">
                     <h1 class="display-5 fw-bold">Welcome to CampusNote <span class="real-time-indicator"></span></h1>
@@ -615,7 +647,7 @@
         </div>
 
         <!-- Notes Section -->
-        <div id="notes" class="section">
+        <div id="notes" class="section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Lecture Notes <span class="real-time-indicator"></span></h2>
@@ -639,7 +671,7 @@
         </div>
 
         <!-- Assignments Section -->
-        <div id="assignments" class="section">
+        <div id="assignments" class="section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Assignments <span class="real-time-indicator"></span></h2>
@@ -663,7 +695,7 @@
         </div>
 
         <!-- Past Questions Section -->
-        <div id="past-questions" class="section">
+        <div id="past-questions" class="section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Past Questions <span class="real-time-indicator"></span></h2>
@@ -687,7 +719,7 @@
         </div>
 
         <!-- Chat Section -->
-        <div id="chat" class="section">
+        <div id="chat" class="section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <h2 class="mb-4">Chat <span class="real-time-indicator"></span></h2>
                 <div class="row">
@@ -736,7 +768,7 @@
         </div>
 
         <!-- Profile Section -->
-        <div id="profile" class="section">
+        <div id="profile" class="section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="row">
                     <div class="col-md-4 mb-4">
@@ -1807,162 +1839,228 @@ else if (sectionId === 'chat') {
         }
 
         async function loadNotes() {
-            const container = document.getElementById('notesContent');
-            if (!container) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('notes')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-sticky-note"></i>
-                            <h5>No Notes Yet</h5>
-                            <p>Start by sharing your first lecture note with classmates</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addNoteModal">
-                                <i class="fas fa-plus me-2"></i>Add Your First Note
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = data.map(note => `
-                    <div class="list-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="list-item-title">${escapeHtml(note.title)}</div>
-                                <div class="list-item-meta">${escapeHtml(note.course)} • ${formatDate(note.created_at)}</div>
-                                <p class="mt-2">${escapeHtml(note.content)}</p>
-                            </div>
-                            ${note.user_id === currentUser?.id ? `
-                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteNote('${note.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h5>Error loading notes</h5>
-                        <p class="mb-0">${error.message}</p>
-                    </div>
-                `;
-            }
+    const container = document.getElementById('notesContent');
+    if (!container) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('notes')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-sticky-note"></i>
+                    <h5>No Notes Yet</h5>
+                    <p>Start by sharing your first lecture note with classmates</p>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                        <i class="fas fa-plus me-2"></i>Add Your First Note
+                    </button>
+                </div>
+            `;
+            return;
         }
+        
+        container.innerHTML = data.map(note => `
+            <div class="list-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="list-item-title">${escapeHtml(note.title)}</div>
+                        <div class="list-item-meta">${escapeHtml(note.course)} • ${formatDate(note.created_at)}</div>
+                        <p class="mt-2">${escapeHtml(note.content)}</p>
+                        
+                        ${note.file_url ? `
+                            <div class="file-attachment mt-2">
+                                <i class="fas fa-paperclip me-1"></i>
+                                <span class="file-name">${note.file_name || 'Attached file'}</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="downloadFile('${note.file_url}', '${note.file_name || 'download'}')">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                ${note.file_type?.includes('image') || note.file_type?.includes('pdf') ? `
+                                    <button class="btn btn-sm btn-outline-info ms-1" onclick="previewUploadedFile('${note.file_url}', '${note.file_type}', '${note.file_name}')">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="d-flex flex-column">
+                        ${note.user_id === currentUser?.id ? `
+                            <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteNote('${note.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                        ${note.file_url ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${note.file_url}', '${note.file_name || 'download'}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error loading notes</h5>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+    }
+}
 
         async function loadAssignments() {
-            const container = document.getElementById('assignmentsContent');
-            if (!container) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('assignments')
-                    .select('*')
-                    .order('due_date', { ascending: true });
-                
-                if (error) throw error;
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-tasks"></i>
-                            <h5>No Assignments Yet</h5>
-                            <p>Track your assignments and deadlines here</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
-                                <i class="fas fa-plus me-2"></i>Add Your First Assignment
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = data.map(assignment => `
-                    <div class="list-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="list-item-title">${escapeHtml(assignment.title)}</div>
-                                <div class="list-item-meta">${escapeHtml(assignment.course)} • Due: ${formatDate(assignment.due_date)}</div>
-                                <p class="mt-2">${escapeHtml(assignment.description)}</p>
-                            </div>
-                            ${assignment.user_id === currentUser?.id ? `
-                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteAssignment('${assignment.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h5>Error loading assignments</h5>
-                        <p class="mb-0">${error.message}</p>
-                    </div>
-                `;
-            }
+    const container = document.getElementById('assignmentsContent');
+    if (!container) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('assignments')
+            .select('*')
+            .order('due_date', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-tasks"></i>
+                    <h5>No Assignments Yet</h5>
+                    <p>Track your assignments and deadlines here</p>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
+                        <i class="fas fa-plus me-2"></i>Add Your First Assignment
+                    </button>
+                </div>
+            `;
+            return;
         }
+        
+        container.innerHTML = data.map(assignment => `
+            <div class="list-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="list-item-title">${escapeHtml(assignment.title)}</div>
+                        <div class="list-item-meta">${escapeHtml(assignment.course)} • Due: ${formatDate(assignment.due_date)}</div>
+                        <p class="mt-2">${escapeHtml(assignment.description)}</p>
+                        
+                        ${assignment.file_url ? `
+                            <div class="file-attachment mt-2">
+                                <i class="fas fa-paperclip me-1"></i>
+                                <span class="file-name">${assignment.file_name || 'Attached file'}</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="downloadFile('${assignment.file_url}', '${assignment.file_name || 'download'}')">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                ${assignment.file_type?.includes('image') || assignment.file_type?.includes('pdf') ? `
+                                    <button class="btn btn-sm btn-outline-info ms-1" onclick="previewUploadedFile('${assignment.file_url}', '${assignment.file_type}', '${assignment.file_name}')">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="d-flex flex-column">
+                        ${assignment.user_id === currentUser?.id ? `
+                            <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteAssignment('${assignment.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                        ${assignment.file_url ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${assignment.file_url}', '${assignment.file_name || 'download'}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error loading assignments</h5>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+    }
+}
 
         async function loadPastQuestions() {
-            const container = document.getElementById('pastQuestionsContent');
-            if (!container) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('past_questions')
-                    .select('*')
-                    .order('year', { ascending: false });
-                
-                if (error) throw error;
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-file-alt"></i>
-                            <h5>No Past Questions Yet</h5>
-                            <p>Share past exam questions to help your classmates</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
-                                <i class="fas fa-plus me-2"></i>Add Your First Past Question
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = data.map(pq => `
-                    <div class="list-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="list-item-title">${escapeHtml(pq.title)}</div>
-                                <div class="list-item-meta">${escapeHtml(pq.course)} • ${pq.year}</div>
-                            </div>
-                            ${pq.user_id === currentUser?.id ? `
-                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="deletePastQuestion('${pq.id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h5>Error loading past questions</h5>
-                        <p class="mb-0">${error.message}</p>
-                    </div>
-                `;
-            }
+    const container = document.getElementById('pastQuestionsContent');
+    if (!container) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('past_questions')
+            .select('*')
+            .order('year', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h5>No Past Questions Yet</h5>
+                    <p>Share past exam questions to help your classmates</p>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
+                        <i class="fas fa-plus me-2"></i>Add Your First Past Question
+                    </button>
+                </div>
+            `;
+            return;
         }
+        
+        container.innerHTML = data.map(pq => `
+            <div class="list-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="list-item-title">${escapeHtml(pq.title)}</div>
+                        <div class="list-item-meta">${escapeHtml(pq.course)} • ${pq.year}</div>
+                        
+                        ${pq.file_url ? `
+                            <div class="file-attachment mt-2">
+                                <i class="fas fa-paperclip me-1"></i>
+                                <span class="file-name">${pq.file_name || 'Attached file'}</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="downloadFile('${pq.file_url}', '${pq.file_name || 'download'}')">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                                ${pq.file_type?.includes('image') || pq.file_type?.includes('pdf') ? `
+                                    <button class="btn btn-sm btn-outline-info ms-1" onclick="previewUploadedFile('${pq.file_url}', '${pq.file_type}', '${pq.file_name}')">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="d-flex flex-column">
+                        ${pq.user_id === currentUser?.id ? `
+                            <button class="btn btn-sm btn-outline-danger mb-1" onclick="deletePastQuestion('${pq.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : ''}
+                        ${pq.file_url ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${pq.file_url}', '${pq.file_name || 'download'}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error loading past questions</h5>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+    }
+}
 
         // Save new note with file upload
 async function saveNote() {
@@ -2487,46 +2585,6 @@ function loadFilePreview(file, fileType) {
     }
 }
 
-// Download file
-function downloadFile(fileName, fileType) {
-    // This will be used for downloaded files from server
-    alert(`Download functionality will be available after file is uploaded to ${fileType}`);
-}
-
-// Upload file to Supabase storage
-async function uploadFileToStorage(file, bucketName, folder = '') {
-    try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${folder}/${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-        
-        const { data, error } = await supabase.storage
-            .from(bucketName)
-            .upload(fileName, file);
-
-        if (error) throw error;
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(fileName);
-
-        return {
-            url: publicUrl,
-            name: file.name,
-            type: file.type
-        };
-
-    } catch (error) {
-        console.error('Error uploading file:', error);
-        throw error;
-    }
-}
-
-// Make functions global
-window.removeFile = removeFile;
-window.previewFile = previewFile;
-window.downloadFile = downloadFile;
-
         // Sample Data Function
         window.addSampleData = async function() {
             try {
@@ -2594,6 +2652,140 @@ window.downloadFile = downloadFile;
         });
 
         console.log('🎉 CampusNote Real-time Platform Ready!');
+        // ==================== DOWNLOAD & PREVIEW FUNCTIONS ====================
+
+// Download file from URL
+function downloadFile(fileUrl, fileName) {
+    try {
+        console.log('📥 Downloading file:', fileName, 'from:', fileUrl);
+        
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName || 'download';
+        link.target = '_blank';
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show success notification
+        showNotification(`Downloading ${fileName || 'file'}...`);
+        
+    } catch (error) {
+        console.error('❌ Download error:', error);
+        alert('Error downloading file: ' + error.message);
+    }
+}
+
+// Preview uploaded file (for images and PDFs)
+function previewUploadedFile(fileUrl, fileType, fileName) {
+    console.log('👀 Previewing file:', fileName, 'Type:', fileType);
+    
+    // Remove existing preview modal if any
+    const existingModal = document.getElementById('filePreviewModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    const modalHTML = `
+        <div class="modal fade" id="filePreviewModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Preview: ${fileName || 'File'}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div id="filePreviewContent">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading preview...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="downloadFile('${fileUrl}', '${fileName}')">
+                            <i class="fas fa-download me-2"></i>Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    const modal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+    modal.show();
+
+    // Load file preview based on file type
+    loadUploadedFilePreview(fileUrl, fileType, fileName);
+}
+
+// Load preview for uploaded files
+function loadUploadedFilePreview(fileUrl, fileType, fileName) {
+    const previewContent = document.getElementById('filePreviewContent');
+    
+    if (fileType.includes('image')) {
+        // Image preview
+        previewContent.innerHTML = `
+            <img src="${fileUrl}" class="img-fluid" style="max-height: 70vh;" alt="${fileName}" onerror="handlePreviewError(this)">
+            <p class="mt-3"><strong>${fileName}</strong></p>
+        `;
+    } else if (fileType.includes('pdf')) {
+        // PDF preview
+        previewContent.innerHTML = `
+            <iframe src="${fileUrl}" width="100%" height="600px" style="border: none;">
+                <p>Unable to display PDF file. <a href="${fileUrl}" download="${fileName}">Download instead</a></p>
+            </iframe>
+            <p class="mt-3"><strong>${fileName}</strong></p>
+        `;
+    } else if (fileType.includes('text') || fileType.includes('document')) {
+        // Text/document files - show download option
+        previewContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Preview not available for this file type.
+            </div>
+            <p><strong>${fileName}</strong></p>
+            <p class="text-muted">File type: ${fileType || 'Unknown'}</p>
+            <p>Please download the file to view its contents.</p>
+        `;
+    } else {
+        // Unsupported file type
+        previewContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Preview not available for this file type.
+            </div>
+            <p><strong>${fileName}</strong></p>
+            <p class="text-muted">File type: ${fileType || 'Unknown'}</p>
+            <button class="btn btn-primary mt-2" onclick="downloadFile('${fileUrl}', '${fileName}')">
+                <i class="fas fa-download me-2"></i>Download File
+            </button>
+        `;
+    }
+}
+
+// Handle preview errors
+function handlePreviewError(imgElement) {
+    imgElement.style.display = 'none';
+    const container = imgElement.parentElement;
+    container.innerHTML = `
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Unable to load preview. The file may have been moved or deleted.
+        </div>
+        <p><strong>${imgElement.alt}</strong></p>
+    `;
+}
+
+// Make functions global
+window.downloadFile = downloadFile;
+window.previewUploadedFile = previewUploadedFile;
     </script>
 </body>
 </html>

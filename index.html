@@ -125,6 +125,45 @@
             margin-bottom: 30px; /* Increased margin */
             text-align: center;
         }
+        /* User menu styling */
+#userMenu .nav-link {
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#userMenu .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#userMenu .dropdown-toggle::after {
+    display: none; /* Hide the dropdown arrow */
+}
+
+#userMenu .fa-user,
+#userMenu .fa-user-circle {
+    font-size: 1.2rem;
+}
+
+/* Dropdown menu styling */
+.dropdown-header {
+    font-weight: 600;
+    color: #495057;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
         /* File attachment styles */
 .file-attachment {
     background-color: #f8f9fa;
@@ -470,22 +509,27 @@
             <a class="navbar-brand" href="#">
                 <i class="fas fa-book me-2"></i>CampusNote <span class="real-time-indicator"></span>
             </a>
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown" id="userDropdown" style="display: none;">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <span id="userInitials" class="user-avatar me-2"></span>
-                        <span id="userName"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" data-section="profile"><i class="fas fa-user me-2"></i>Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-                <div id="authButtons" class="d-flex">
-                    <button class="btn btn-outline-light me-2" id="loginBtn">Login</button>
-                    <button class="btn btn-light" id="signupBtn">Sign Up</button>
-                </div>
+            <!-- REPLACE BOTH authButtons AND userDropdown WITH THIS -->
+<div class="nav-item dropdown" id="userMenu">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-user" id="userIcon"></i>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu">
+        <!-- Unauthenticated state -->
+        <div id="unauthenticatedMenu">
+            <li><a class="dropdown-item" href="#" id="dropdownLoginBtn"><i class="fas fa-sign-in-alt me-2"></i>Login</a></li>
+            <li><a class="dropdown-item" href="#" id="dropdownSignupBtn"><i class="fas fa-user-plus me-2"></i>Sign Up</a></li>
+        </div>
+        
+        <!-- Authenticated state -->
+        <div id="authenticatedMenu" style="display: none;">
+            <li><span class="dropdown-header"><i class="fas fa-user me-2"></i><span id="dropdownUserName">User</span></span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" data-section="profile"><i class="fas fa-user-edit me-2"></i>Profile</a></li>
+            <li><a class="dropdown-item" href="#" id="dropdownLogoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+        </div>
+    </ul>
+</div>
             </div>
         </div>
     </nav>
@@ -1034,25 +1078,29 @@ const supabase = createClient(supabaseUrl, supabaseKey)
         }
 
         function setupEventListeners() {
-            console.log('🔧 Setting up event listeners');
-            
-            // Authentication
-            const loginBtn = document.getElementById('loginBtn');
-            const signupBtn = document.getElementById('signupBtn');
-            const showSignup = document.getElementById('showSignup');
-            const showLogin = document.getElementById('showLogin');
-            const loginForm = document.getElementById('loginFormElement');
-            const signupForm = document.getElementById('signupFormElement');
-            const logoutBtn = document.getElementById('logoutBtn');
+    console.log('🔧 Setting up event listeners');
+    
+    // Remove old auth button listeners and add new dropdown listeners
+    const dropdownLoginBtn = document.getElementById('dropdownLoginBtn');
+    const dropdownSignupBtn = document.getElementById('dropdownSignupBtn');
+    const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+    
+    if (dropdownLoginBtn) dropdownLoginBtn.addEventListener('click', showLoginForm);
+    if (dropdownSignupBtn) dropdownSignupBtn.addEventListener('click', showSignupForm);
+    if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+    
+    // Profile navigation from dropdown
+    document.querySelectorAll('#authenticatedMenu [data-section="profile"]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchSection('profile');
+            // Close dropdown
+            const dropdown = bootstrap.Dropdown.getInstance(document.querySelector('#userMenu .dropdown-toggle'));
+            if (dropdown) dropdown.hide();
+        });
+    });
 
-            if (loginBtn) loginBtn.addEventListener('click', showLoginForm);
-            if (signupBtn) signupBtn.addEventListener('click', showSignupForm);
-            if (showSignup) showSignup.addEventListener('click', showSignupForm);
-            if (showLogin) showLogin.addEventListener('click', showLoginForm);
-            if (loginForm) loginForm.addEventListener('submit', handleLogin);
-            if (signupForm) signupForm.addEventListener('submit', handleSignup);
-            if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
-
+}
             // Bottom navigation
             document.querySelectorAll('.bottom-nav-item').forEach(item => {
                 item.addEventListener('click', function() {
@@ -1099,7 +1147,6 @@ const supabase = createClient(supabaseUrl, supabaseKey)
                     });
                 }
             });
-        }
 
         
 
@@ -1294,79 +1341,121 @@ const supabase = createClient(supabaseUrl, supabaseKey)
         }
 
         function updateProfileUI() {
-            if (!currentUser || !currentUser.profile) return;
-            
-            const profile = currentUser.profile;
-            const initials = getInitials(profile.name);
-            
-            // Update navigation
-            const userInitials = document.getElementById('userInitials');
-            const userName = document.getElementById('userName');
-            const welcomeUser = document.getElementById('welcomeUser');
-            
-            if (userInitials) userInitials.textContent = initials;
-            if (userName) userName.textContent = profile.name;
-            if (welcomeUser) welcomeUser.textContent = `Hello, ${profile.name}!`;
-            
-            // Update profile section
-            const profileAvatar = document.getElementById('profileAvatar');
-            const profileName = document.getElementById('profileName');
-            const profileLevel = document.getElementById('profileLevel');
-            const profileDepartment = document.getElementById('profileDepartment');
-            const profileEmail = document.getElementById('profileEmail');
-            
-            if (profileAvatar) profileAvatar.textContent = initials;
-            if (profileName) profileName.textContent = profile.name;
-            if (profileLevel) profileLevel.textContent = profile.level;
-            if (profileDepartment) profileDepartment.textContent = profile.department;
-            if (profileEmail) profileEmail.textContent = currentUser.email;
-            
-            // Set form values
-            const editName = document.getElementById('editName');
-            const editLevel = document.getElementById('editLevel');
-            const editDepartment = document.getElementById('editDepartment');
-            
-            if (editName) editName.value = profile.name;
-            if (editLevel) editLevel.value = profile.level;
-            if (editDepartment) editDepartment.value = profile.department;
-            
-            loadUserContributions();
-        }
-
-        function getInitials(name) {
-            return name.split(' ').map(n => n[0]).join('').toUpperCase();
-        }
+    if (!currentUser || !currentUser.profile) {
+        console.log('❌ No user or profile data available');
+        return;
+    }
+    
+    const profile = currentUser.profile;
+    
+    try {
+        // Safely get initials
+        const initials = getInitials(profile.name);
+        
+        // Update navigation elements if they exist
+        const userInitials = document.getElementById('userInitials');
+        const userName = document.getElementById('userName');
+        const welcomeUser = document.getElementById('welcomeUser');
+        
+        if (userInitials) userInitials.textContent = initials;
+        if (userName) userName.textContent = profile.name;
+        if (welcomeUser) welcomeUser.textContent = `Hello, ${profile.name}!`;
+        
+        // Update profile section
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const profileLevel = document.getElementById('profileLevel');
+        const profileDepartment = document.getElementById('profileDepartment');
+        const profileEmail = document.getElementById('profileEmail');
+        
+        if (profileAvatar) profileAvatar.textContent = initials;
+        if (profileName) profileName.textContent = profile.name;
+        if (profileLevel) profileLevel.textContent = profile.level;
+        if (profileDepartment) profileDepartment.textContent = profile.department;
+        if (profileEmail) profileEmail.textContent = currentUser.email;
+        
+        // Set form values
+        const editName = document.getElementById('editName');
+        const editLevel = document.getElementById('editLevel');
+        const editDepartment = document.getElementById('editDepartment');
+        
+        if (editName) editName.value = profile.name;
+        if (editLevel) editLevel.value = profile.level;
+        if (editDepartment) editDepartment.value = profile.department;
+        
+        // Update unified dropdown (if using new system)
+        const dropdownUserName = document.getElementById('dropdownUserName');
+        if (dropdownUserName) dropdownUserName.textContent = profile.name;
+        
+        loadUserContributions();
+        
+    } catch (error) {
+        console.error('Error updating profile UI:', error);
+    }
+}
 
         // UI State Management
-        function showAuthenticatedUI() {
-            const authSection = document.getElementById('auth-section');
-            const authButtons = document.getElementById('authButtons');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            if (authSection) authSection.classList.remove('active');
-            if (authButtons) authButtons.style.display = 'none';
-            if (userDropdown) userDropdown.style.display = 'block';
-            
-            document.querySelectorAll('.section').forEach(section => {
-                if (section.id !== 'auth-section') section.style.display = 'none';
-            });
-            
-            switchSection('dashboard');
-        }
+        // UI State Management - UPDATED
+function showAuthenticatedUI() {
+    const authSection = document.getElementById('auth-section');
+    
+    if (authSection) authSection.classList.remove('active');
+    
+    document.querySelectorAll('.section').forEach(section => {
+        if (section.id !== 'auth-section') section.style.display = 'none';
+    });
+    
+    // Update user menu for authenticated state
+    updateUserMenu(true);
+    
+    switchSection('dashboard');
+}
 
-        function showUnauthenticatedUI() {
-            const authSection = document.getElementById('auth-section');
-            const authButtons = document.getElementById('authButtons');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            if (authSection) authSection.classList.add('active');
-            if (authButtons) authButtons.style.display = 'flex';
-            if (userDropdown) userDropdown.style.display = 'none';
-            
-            document.querySelectorAll('.section').forEach(section => {
-                if (section.id !== 'auth-section') section.style.display = 'none';
-            });
+function showUnauthenticatedUI() {
+    const authSection = document.getElementById('auth-section');
+    
+    if (authSection) authSection.classList.add('active');
+    
+    document.querySelectorAll('.section').forEach(section => {
+        if (section.id !== 'auth-section') section.style.display = 'none';
+    });
+    
+    // Update user menu for unauthenticated state
+    updateUserMenu(false);
+}
+
+// New function to update user menu
+function updateUserMenu(isAuthenticated) {
+    const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
+    const authenticatedMenu = document.getElementById('authenticatedMenu');
+    const userIcon = document.getElementById('userIcon');
+    const dropdownUserName = document.getElementById('dropdownUserName');
+    
+    if (isAuthenticated && currentUser) {
+        // Show authenticated menu
+        if (unauthenticatedMenu) unauthenticatedMenu.style.display = 'none';
+        if (authenticatedMenu) authenticatedMenu.style.display = 'block';
+        
+        // Update user info
+        if (dropdownUserName && currentUser.profile) {
+            dropdownUserName.textContent = currentUser.profile.name;
         }
+        
+        // Change icon to filled user when authenticated
+        if (userIcon) {
+            userIcon.className = 'fas fa-user-circle';
+        }
+    } else {
+        // Show unauthenticated menu
+        if (unauthenticatedMenu) unauthenticatedMenu.style.display = 'block';
+        if (authenticatedMenu) authenticatedMenu.style.display = 'none';
+        
+        // Change icon to outline user when not authenticated
+        if (userIcon) {
+            userIcon.className = 'fas fa-user';
+        }
+    }
+}
 
         function switchSection(sectionId) {
             // Hide all sections
@@ -2195,21 +2284,27 @@ async function saveAssignment() {
 }
 
 // Save new past question with file upload
+// Save new past question with file upload - UPDATED VERSION
 async function savePastQuestion() {
     const title = document.getElementById('pastQuestionTitle');
     const course = document.getElementById('pastQuestionCourse');
     const year = document.getElementById('pastQuestionYear');
     const pastQuestionFileInput = document.getElementById('pastQuestionFile');
     
-    if (!title || !course || !year) return;
+    if (!title || !course || !year) {
+        alert('Please fill in all required fields');
+        return;
+    }
     
     try {
         let fileData = null;
         
         // Upload file if exists
-        if (pastQuestionFileInput.files.length > 0) {
+        if (pastQuestionFileInput && pastQuestionFileInput.files.length > 0) {
             const file = pastQuestionFileInput.files[0];
+            console.log('📤 Starting file upload...');
             fileData = await uploadFileToStorage(file, 'past-questions', currentUser.id);
+            console.log('✅ File upload completed:', fileData);
         }
         
         const pastQuestionData = {
@@ -2217,7 +2312,7 @@ async function savePastQuestion() {
             course: course.value,
             year: year.value,
             user_id: currentUser.id,
-            created_at: new Date()
+            created_at: new Date().toISOString()
         };
         
         // Add file data if uploaded
@@ -2226,6 +2321,8 @@ async function savePastQuestion() {
             pastQuestionData.file_name = fileData.name;
             pastQuestionData.file_type = fileData.type;
         }
+        
+        console.log('📦 Saving past question data:', pastQuestionData);
         
         const { error } = await supabase.from('past_questions').insert([pastQuestionData]);
         
@@ -2241,7 +2338,16 @@ async function savePastQuestion() {
         const pastQuestionFilePreview = document.getElementById('pastQuestionFilePreview');
         if (pastQuestionFilePreview) pastQuestionFilePreview.innerHTML = '';
         
+        // Show success message
+        showNotification('Past question saved successfully!');
+        
+        // Refresh the past questions list
+        if (document.getElementById('past-questions').classList.contains('active')) {
+            loadPastQuestions();
+        }
+        
     } catch (error) {
+        console.error('❌ Error saving past question:', error);
         alert('Error saving past question: ' + error.message);
     }
 }
@@ -2373,6 +2479,59 @@ async function savePastQuestion() {
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+        // Upload file to Supabase storage
+async function uploadFileToStorage(file, bucketName, folder = '') {
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${folder}/${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        
+        console.log('📤 Uploading file to:', bucketName, 'File:', file.name);
+        
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, file);
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(fileName);
+
+        console.log('✅ File uploaded successfully:', publicUrl);
+        
+        return {
+            url: publicUrl,
+            name: file.name,
+            type: file.type
+        };
+
+    } catch (error) {
+        console.error('❌ Error uploading file:', error);
+        throw error;
+    }
+}
+
+// Make it globally available
+window.uploadFileToStorage = uploadFileToStorage;
+
+// Add this function anywhere in your JavaScript (preferably with other utility functions)
+function getInitials(name) {
+    if (!name || typeof name !== 'string') return 'U';
+    try {
+        return name.split(' ')
+            .map(word => word.charAt(0))
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+    } catch (error) {
+        console.error('Error getting initials:', error);
+        return 'U';
+    }
+}
+
+// Make it globally available
+window.getInitials = getInitials;
         // ==================== FILE UPLOAD & PREVIEW FUNCTIONS ====================
 
 // File upload handlers

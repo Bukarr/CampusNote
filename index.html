@@ -39,6 +39,201 @@
             padding-bottom: 80px;
             padding-top: 80px; /* Added padding for fixed navbar */
         }
+        /* Responsive Design */
+.section {
+    padding: 20px 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive List Items */
+.list-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.list-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.list-item-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #212529;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.list-item-meta {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 12px;
+}
+
+/* Responsive File Attachments */
+.file-attachment {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-name {
+    font-weight: 500;
+    color: #495057;
+    flex: 1;
+    min-width: 120px;
+    word-break: break-word;
+}
+
+.file-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Responsive Buttons */
+.btn {
+    white-space: nowrap;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+
+/* Responsive Grid for Items */
+@media (max-width: 576px) {
+    .section {
+        padding: 15px 10px;
+    }
+    
+    .list-item {
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .list-item-title {
+        font-size: 1rem;
+    }
+    
+    .file-attachment {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .file-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .modal-dialog {
+        margin: 10px;
+    }
+}
+
+/* Tablet Styles */
+@media (min-width: 577px) and (max-width: 768px) {
+    .section {
+        padding: 20px;
+    }
+    
+    .list-item {
+        padding: 16px;
+    }
+}
+
+/* Desktop Styles */
+@media (min-width: 769px) {
+    .section {
+        padding: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .list-item {
+        padding: 20px;
+    }
+}
+
+/* Empty State Responsive */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: #dee2e6;
+}
+
+/* Modal Responsive */
+@media (max-width: 576px) {
+    .modal-content {
+        margin: 10px;
+        border-radius: 8px;
+    }
+    
+    .modal-header, 
+    .modal-body, 
+    .modal-footer {
+        padding: 15px;
+    }
+}
+
+/* File Preview Responsive */
+.file-preview-container {
+    margin-top: 10px;
+}
+
+.file-preview-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+/* Ensure forms are responsive */
+.form-control {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive action buttons in list items */
+.list-item-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+@media (max-width: 576px) {
+    .list-item-actions {
+        justify-content: space-between;
+    }
+    
+    .list-item-actions .btn {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+}
         
         /* Top Navigation */
         .navbar {
@@ -917,134 +1112,111 @@
 
     <!-- Add Note Modal -->
     <div class="modal fade" id="addNoteModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Note</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addNoteForm">
-                        <div class="mb-3">
-                            <label for="noteTitle" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="noteTitle" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="noteCourse" class="form-label">Course</label>
-                            <input type="text" class="form-control" id="noteCourse" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="noteContent" class="form-label">Content</label>
-                            <textarea class="form-control" id="noteContent" rows="6" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Attach Files (Optional)</label>
-                            <div class="file-upload-area" onclick="document.getElementById('noteFiles').click()">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p class="mb-1">Click to upload files or drag and drop</p>
-                                <small class="text-muted">PDF, DOC, DOCX, Images (Max 10MB)</small>
-                                <input type="file" class="file-input" id="noteFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt">
-                            </div>
-                            <div id="noteFilesPreview" class="file-preview"></div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveNoteBtn">Save Note</button>
-                </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addNoteForm">
+                    <div class="mb-3">
+                        <label for="noteTitle" class="form-label">Note Title *</label>
+                        <input type="text" class="form-control" id="noteTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noteCourse" class="form-label">Course *</label>
+                        <input type="text" class="form-control" id="noteCourse" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noteFiles" class="form-label">Upload Note File *</label>
+                        <input type="file" class="form-control" id="noteFiles" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" required>
+                        <div class="form-text">Supported formats: PDF, Word, Text, Images (Max: 10MB)</div>
+                    </div>
+                    <div id="noteFilesPreview" class="file-preview-container"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNoteBtn">Save Note</button>
             </div>
         </div>
     </div>
-
+</div>
     <!-- Add Assignment Modal -->
     <div class="modal fade" id="addAssignmentModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Assignment</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addAssignmentForm">
-                        <div class="mb-3">
-                            <label for="assignmentTitle" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="assignmentTitle" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="assignmentCourse" class="form-label">Course</label>
-                            <input type="text" class="form-control" id="assignmentCourse" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="assignmentDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="assignmentDescription" rows="4" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="assignmentDueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="assignmentDueDate" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Attach Files (Optional)</label>
-                            <div class="file-upload-area" onclick="document.getElementById('assignmentFiles').click()">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p class="mb-1">Click to upload assignment files</p>
-                                <small class="text-muted">PDF, DOC, DOCX, ZIP (Max 10MB)</small>
-                                <input type="file" class="file-input" id="assignmentFiles" multiple accept=".pdf,.doc,.docx,.zip,.rar,.txt">
-                            </div>
-                            <div id="assignmentFilesPreview" class="file-preview"></div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveAssignmentBtn">Save Assignment</button>
-                </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAssignmentForm">
+                    <div class="mb-3">
+                        <label for="assignmentTitle" class="form-label">Assignment Title *</label>
+                        <input type="text" class="form-control" id="assignmentTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignmentCourse" class="form-label">Course *</label>
+                        <input type="text" class="form-control" id="assignmentCourse" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignmentDueDate" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="assignmentDueDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignmentFiles" class="form-label">Upload Assignment File *</label>
+                        <input type="file" class="form-control" id="assignmentFiles" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" required>
+                        <div class="form-text">Supported formats: PDF, Word, Text, Images (Max: 10MB)</div>
+                    </div>
+                    <div id="assignmentFilesPreview" class="file-preview-container"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveAssignmentBtn">Save Assignment</button>
             </div>
         </div>
     </div>
-
+</div>
     <!-- Add Past Question Modal -->
     <div class="modal fade" id="addPastQuestionModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Past Question</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addPastQuestionForm">
-                        <div class="mb-3">
-                            <label for="pastQuestionTitle" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="pastQuestionTitle" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="pastQuestionCourse" class="form-label">Course</label>
-                            <input type="text" class="form-control" id="pastQuestionCourse" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="pastQuestionYear" class="form-label">Year</label>
-                            <input type="text" class="form-control" id="pastQuestionYear" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Upload Past Question File</label>
-                            <div class="file-upload-area" onclick="document.getElementById('pastQuestionFile').click()">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p class="mb-1">Click to upload past question file</p>
-                                <small class="text-muted">PDF, DOC, DOCX, Images (Max 10MB)</small>
-                                <input type="file" class="file-input" id="pastQuestionFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                            </div>
-                            <div id="pastQuestionFilePreview" class="file-preview"></div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="savePastQuestionBtn">Save Past Question</button>
-                </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPastQuestionForm">
+                    <div class="mb-3">
+                        <label for="pastQuestionTitle" class="form-label">Title *</label>
+                        <input type="text" class="form-control" id="pastQuestionTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pastQuestionCourse" class="form-label">Course *</label>
+                        <input type="text" class="form-control" id="pastQuestionCourse" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pastQuestionYear" class="form-label">Year *</label>
+                        <input type="number" class="form-control" id="pastQuestionYear" min="2000" max="2030" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pastQuestionFile" class="form-label">Upload Past Question File *</label>
+                        <input type="file" class="form-control" id="pastQuestionFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                        <div class="form-text">Supported formats: PDF, Word, Images (Max: 10MB)</div>
+                    </div>
+                    <div id="pastQuestionFilePreview" class="file-preview-container"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="savePastQuestionBtn">Save Past Question</button>
             </div>
         </div>
     </div>
-
+</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -1060,6 +1232,8 @@ const supabase = createClient(supabaseUrl, supabaseKey)
         let notesSubscription = null;
         let assignmentsSubscription = null;
         let pastQuestionsSubscription = null;
+        let displayedMessageIds = new Set();
+        let lastMessageTimestamp = 0;
 
         // DOM Content Loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -1722,7 +1896,337 @@ function switchSection(sectionId) {
 
 // ==================== CHAT FUNCTIONS ====================
 
-// Load online users for chat
+// Scroll chat to bottom - SIMPLE AND RELIABLE
+window.scrollChatToBottom = function() {
+    try {
+        const container = document.getElementById('chatMessages');
+        if (container) {
+            // Multiple methods to ensure it scrolls
+            container.scrollTop = container.scrollHeight;
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+            console.log('✅ Scrolled to bottom');
+        }
+    } catch (error) {
+        console.log('⚠️ Scroll error:', error);
+    }
+}
+
+// Display message - SIMPLE AND RELIABLE
+window.displayMessage = function(message) {
+    console.log('🖥️ DISPLAY MESSAGE CALLED:', message);
+    
+    // Basic validation
+    if (!message || typeof message !== 'object') {
+        console.log('❌ Invalid message object');
+        return false;
+    }
+    
+    if (!message.content || message.content.trim() === '') {
+        console.log('❌ Empty message content');
+        return false;
+    }
+    
+    // Get chat container
+    const container = document.getElementById('chatMessages');
+    if (!container) {
+        console.log('❌ Chat container not found');
+        return false;
+    }
+    
+    console.log('📦 Container found, proceeding...');
+    
+    // Remove empty state if it exists
+    const emptyStates = container.querySelectorAll('.empty-state, .text-center');
+    emptyStates.forEach(state => state.remove());
+    
+    // Create message element
+    const messageElement = document.createElement('div');
+    
+    // Determine message type
+    const isOwnMessage = message.sender_id === currentUser?.id;
+    const messageClass = isOwnMessage ? 'own-message' : 'other-message';
+    
+    // Format time
+    let messageTime = 'Now';
+    try {
+        if (message.created_at) {
+            messageTime = formatTime(message.created_at);
+        }
+    } catch (e) {
+        console.log('⚠️ Time formatting error:', e);
+    }
+    
+    // Create message HTML
+    messageElement.className = `message ${messageClass}`;
+    messageElement.innerHTML = `
+        <div class="message-content">
+            <div class="message-text">${escapeHtml(message.content)}</div>
+            <div class="message-time">${messageTime}</div>
+        </div>
+    `;
+    
+    // Add to container
+    container.appendChild(messageElement);
+    console.log('✅ Message added to DOM');
+    
+    // Scroll to bottom
+    setTimeout(() => {
+        window.scrollChatToBottom();
+    }, 100);
+    
+    return true;
+}
+
+// Send message - SIMPLE AND RELIABLE
+window.sendMessage = async function() {
+    console.log('🎯 SEND MESSAGE STARTED');
+    
+    // Get elements
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendMessage');
+    const chatContainer = document.getElementById('chatMessages');
+    
+    // Validate elements
+    if (!messageInput) {
+        console.log('❌ Message input not found');
+        alert('Message input not found');
+        return;
+    }
+    
+    if (!sendButton) {
+        console.log('❌ Send button not found');
+        return;
+    }
+    
+    if (!chatContainer) {
+        console.log('❌ Chat container not found');
+        alert('Chat container not found');
+        return;
+    }
+    
+    if (!currentUser) {
+        alert('Please log in to send messages');
+        return;
+    }
+    
+    if (!currentChatUser) {
+        alert('Please select a user to chat with');
+        return;
+    }
+    
+    // Get and validate message content
+    const content = messageInput.value.trim();
+    if (!content) {
+        console.log('❌ No message content');
+        messageInput.focus();
+        return;
+    }
+    
+    console.log('💬 Sending message to:', currentChatUser.name);
+    
+    // Save original button state
+    const originalHTML = sendButton.innerHTML;
+    const originalDisabled = sendButton.disabled;
+    
+    // Set loading state
+    sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    sendButton.disabled = true;
+    messageInput.disabled = true;
+    
+    try {
+        // Create message data
+        const messageData = {
+            content: content,
+            sender_id: currentUser.id,
+            receiver_id: currentChatUser.id,
+            created_at: new Date().toISOString()
+        };
+        
+        console.log('📤 Sending to database:', messageData);
+        
+        // Send to database
+        const { data, error } = await supabase
+            .from('messages')
+            .insert([messageData])
+            .select();
+        
+        if (error) {
+            console.error('❌ Database error:', error);
+            throw error;
+        }
+        
+        console.log('✅ Database insert successful:', data);
+        
+        // Create message object for display
+        const messageToDisplay = {
+            id: data[0]?.id || 'temp-' + Date.now(),
+            content: content,
+            sender_id: currentUser.id,
+            receiver_id: currentChatUser.id,
+            created_at: new Date().toISOString()
+        };
+        
+        console.log('🚀 Displaying message immediately:', messageToDisplay);
+        
+        // DISPLAY MESSAGE IMMEDIATELY - Don't wait for real-time
+        const displaySuccess = displayMessage(messageToDisplay);
+        
+        if (!displaySuccess) {
+            console.log('❌ Message display failed, trying manual method');
+            // Fallback manual display
+            const fallbackElement = document.createElement('div');
+            fallbackElement.className = 'message own-message';
+            fallbackElement.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${escapeHtml(content)}</div>
+                    <div class="message-time">Now</div>
+                </div>
+            `;
+            chatContainer.appendChild(fallbackElement);
+            window.scrollChatToBottom();
+        }
+        
+        // Clear input
+        messageInput.value = '';
+        console.log('✅ Message process completed');
+        
+    } catch (error) {
+        console.error('❌ Send message error:', error);
+        alert('Failed to send message: ' + error.message);
+    } finally {
+        // Always reset UI state
+        sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        sendButton.disabled = false;
+        messageInput.disabled = false;
+        
+        // Focus input
+        setTimeout(() => {
+            messageInput.focus();
+        }, 50);
+        
+        console.log('🔄 UI reset completed');
+    }
+}
+
+// Load chat history - SIMPLIFIED
+window.loadChatHistory = async function(userId) {
+    console.log('💬 LOADING CHAT HISTORY FOR:', userId);
+    
+    const container = document.getElementById('chatMessages');
+    if (!container) {
+        console.log('❌ Chat container not found for history');
+        return;
+    }
+    
+    try {
+        // Show loading
+        container.innerHTML = `
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading messages...</span>
+                </div>
+                <p class="mt-2">Loading messages...</p>
+            </div>
+        `;
+        
+        // Load messages
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        // Clear container
+        container.innerHTML = '';
+        displayedMessageIds.clear();
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>No messages yet. Start a conversation!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        console.log(`✅ Loaded ${data.length} messages`);
+        
+        // Display all messages
+        data.forEach(message => {
+            displayMessage(message);
+        });
+        
+        // Scroll to bottom
+        window.scrollChatToBottom();
+        
+    } catch (error) {
+        console.error('❌ Load history error:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Error loading messages
+            </div>
+        `;
+    }
+}
+// Select user to chat with
+window.selectChatUser = async function(userId, userName, event) {
+    console.log('💬 SELECTING CHAT USER:', userName);
+    
+    if (!currentUser) {
+        alert('Please log in to use chat');
+        return;
+    }
+    
+    // Set current chat user
+    currentChatUser = { 
+        id: userId, 
+        name: userName 
+    };
+    
+    console.log('👥 Current chat user set:', currentChatUser);
+    
+    // Update UI
+    const chatWithUser = document.getElementById('chatWithUser');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendMessage');
+    
+    if (chatWithUser) {
+        chatWithUser.textContent = `Chat with ${userName}`;
+    }
+    
+    if (messageInput) {
+        messageInput.disabled = false;
+        messageInput.placeholder = `Message ${userName}...`;
+    }
+    
+    if (sendButton) {
+        sendButton.disabled = false;
+    }
+    
+    // Highlight selected user
+    document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+    
+    // Load chat history
+    await loadChatHistory(userId);
+    
+    // Focus input
+    setTimeout(() => {
+        if (messageInput) messageInput.focus();
+    }, 100);
+}
+// Load online users
 window.loadOnlineUsers = async function() {
     const container = document.getElementById('onlineUsers');
     if (!container) return;
@@ -1730,7 +2234,7 @@ window.loadOnlineUsers = async function() {
     try {
         const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('id, name, level, department')
             .neq('id', currentUser.id)
             .order('name');
         
@@ -1749,11 +2253,11 @@ window.loadOnlineUsers = async function() {
         container.innerHTML = data.map(user => {
             const initials = getInitials(user.name);
             return `
-                <div class="user-item" onclick="window.selectChatUser('${user.id}', '${user.name}', event)">
+                <div class="user-item" onclick="selectChatUser('${user.id}', '${user.name}', event)">
                     <div class="user-avatar-sm">${initials}</div>
-                    <div class="flex-grow-1">
-                        <div class="fw-bold">${user.name}</div>
-                        <small class="text-muted">${user.level} • ${user.department}</small>
+                    <div class="user-info">
+                        <div class="user-name">${escapeHtml(user.name)}</div>
+                        <div class="user-meta">${user.level} • ${user.department}</div>
                     </div>
                     <div class="user-status online"></div>
                 </div>
@@ -1761,184 +2265,35 @@ window.loadOnlineUsers = async function() {
         }).join('');
         
     } catch (error) {
-        container.innerHTML = '<p class="text-danger">Error loading users</p>';
+        console.error('Error loading users:', error);
+        container.innerHTML = '<div class="text-danger">Error loading users</div>';
     }
 }
-
-// Select user to chat with - GLOBAL
-window.selectChatUser = async function(userId, userName, event) {
-    console.log('💬 Selecting chat user:', userName);
-    
-    if (!currentUser) {
-        alert('Please log in to use chat');
-        return;
-    }
-    
-    currentChatUser = { id: userId, name: userName };
-    
-    const chatWithUser = document.getElementById('chatWithUser');
-    const messageInput = document.getElementById('messageInput');
-    const sendMessageBtn = document.getElementById('sendMessage');
-    
-    if (chatWithUser) chatWithUser.textContent = `Chat with ${userName}`;
-    if (messageInput) {
-        messageInput.disabled = false;
-        messageInput.focus();
-    }
-    if (sendMessageBtn) sendMessageBtn.disabled = false;
-    
-    // Highlight selected user
-    document.querySelectorAll('.user-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-    }
-    
-    await window.loadChatHistory(userId);
-}
-
-// Load chat history - GLOBAL
-window.loadChatHistory = async function(userId) {
-    const container = document.getElementById('chatMessages');
-    if (!container) return;
-    
-    try {
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
-            .order('created_at', { ascending: true });
-        
-        if (error) throw error;
-        
-        container.innerHTML = '';
-        
-        if (!data || data.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-comments"></i>
-                    <p>No messages yet. Start a conversation!</p>
-                </div>
-            `;
-            return;
-        }
-        
-        data.forEach(message => window.displayMessage(message));
-        window.scrollChatToBottom();
-    } catch (error) {
-        container.innerHTML = '<p class="text-danger">Error loading messages</p>';
-    }
-}
-
-// Display a message in the chat - GLOBAL
-window.displayMessage = function(message) {
-    const container = document.getElementById('chatMessages');
-    if (!container) return;
-    
-    const emptyState = container.querySelector('.empty-state');
-    if (emptyState) emptyState.remove();
-    
-    const isOwnMessage = message.sender_id === currentUser.id;
-    const messageTime = formatTime(message.created_at);
-    
-    const messageElement = document.createElement('div');
-    messageElement.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
-    messageElement.innerHTML = `
-        <div class="message-content">
-            <div>${escapeHtml(message.content)}</div>
-            <div class="message-time">${messageTime}</div>
-        </div>
-    `;
-    
-    container.appendChild(messageElement);
-}
-
-// Send message function - GLOBAL
-window.sendMessage = function() {
-    console.log('🎯 sendMessage() called');
-    
-    const messageInput = document.getElementById('messageInput');
-    if (!messageInput) {
-        console.log('❌ No message input found');
-        return;
-    }
-    
-    if (!currentChatUser) {
-        alert('Please select a user to chat with first');
-        return;
-    }
-    
-    const content = messageInput.value.trim();
-    if (!content) {
-        console.log('❌ No message content');
-        return;
-    }
-    
-    console.log('💬 Sending message to:', currentChatUser.name, 'Content:', content);
-    
-    // Send to Supabase
-    supabase.from('messages').insert([{
-        content: content,
-        sender_id: currentUser.id,
-        receiver_id: currentChatUser.id,
-        created_at: new Date()
-    }]).then(({ error }) => {
-        if (error) {
-            console.error('❌ Error sending message:', error);
-            alert('Error sending message: ' + error.message);
-        } else {
-            console.log('✅ Message sent successfully');
-            // Clear input
-            messageInput.value = '';
-            
-            // Immediately display the sent message
-            window.displayMessage({
-                content: content,
-                sender_id: currentUser.id,
-                receiver_id: currentChatUser.id,
-                created_at: new Date()
-            });
-            window.scrollChatToBottom();
-        }
-    });
-}
-
-// Scroll chat to bottom - GLOBAL
-window.scrollChatToBottom = function() {
-    const container = document.getElementById('chatMessages');
-    if (container) {
-        container.scrollTop = container.scrollHeight;
-    }
-}
-
-// Initialize chat - GLOBAL
+// Initialize chat system
 window.initializeChat = function() {
-    console.log('🔧 Setting up chat system...');
+    console.log('🔧 INITIALIZING CHAT SYSTEM');
     
-    // DIRECT approach: Set onclick directly
+    // Set up send button
     const sendButton = document.getElementById('sendMessage');
     if (sendButton) {
-        console.log('🟢 Found send button, setting direct onclick');
         sendButton.onclick = window.sendMessage;
-    } else {
-        console.log('❌ Send button not found');
+        console.log('✅ Send button initialized');
     }
     
-    // Enter key listener
+    // Set up enter key
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
-        messageInput.onkeypress = function(e) {
+        messageInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 window.sendMessage();
             }
-        };
+        });
+        console.log('✅ Enter key listener initialized');
     }
     
-    console.log('✅ Chat system setup complete');
+    console.log('✅ Chat system initialized');
 }
-            
-
         function updateBottomNav(activeItem) {
             document.querySelectorAll('.bottom-nav-item').forEach(item => {
                 item.classList.remove('active');
@@ -1956,51 +2311,40 @@ window.initializeChat = function() {
         }
         
 
-        // Real-time Subscriptions
-        // Real-time Subscriptions - ENHANCED
+        // Minimal real-time subscription
 function setupRealtimeSubscriptions() {
     if (!currentUser) return;
     
-    console.log('🔔 Setting up real-time subscriptions');
+    console.log('🔔 Setting up minimal real-time subscription');
     
-    // Chat subscription - ENHANCED
+    // Remove existing subscription
+    if (chatSubscription) {
+        supabase.removeChannel(chatSubscription);
+    }
+    
+    // Minimal approach - subscribe to all inserts and filter in JS
     chatSubscription = supabase
-        .channel('chat-messages')
-        .on('postgres_changes', 
-            { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'messages',
-                filter: `receiver_id=eq.${currentUser.id}`
-            }, 
+        .channel('simple-chat')
+        .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'messages' },
             (payload) => {
-                console.log('💬 Real-time message received:', payload);
+                const message = payload.new;
                 
-                // Always display the message if it's from the current chat user
-                if (currentChatUser && payload.new.sender_id === currentChatUser.id) {
-                    displayMessage(payload.new);
-                    scrollChatToBottom();
+                // Simple filter: only show messages where current user is involved
+                if (message.sender_id === currentUser.id || message.receiver_id === currentUser.id) {
+                    console.log('💬 New message for current user');
+                    
+                    // If we're in a chat with this user, show the message
+                    if (currentChatUser && 
+                        (message.sender_id === currentChatUser.id || message.receiver_id === currentChatUser.id)) {
+                        displayMessage(message);
+                        scrollChatToBottom();
+                    }
                 }
-                
-                // Also show notification for new messages from other users
-                if (!currentChatUser || payload.new.sender_id !== currentChatUser.id) {
-                    showNotification(`New message from user!`);
-                }
-                // In your switchSection function, update the chat case:
-else if (sectionId === 'chat') {
-    console.log('💬 Loading chat');
-    window.loadOnlineUsers();
-    // Force re-initialize chat after a short delay
-    setTimeout(() => {
-        console.log('🔄 Re-initializing chat...');
-        window.initializeChat();
-    }, 1000);
-}
             }
         )
-        .subscribe((status) => {
-            console.log('📡 Chat subscription status:', status);
-        });
+        .subscribe();
 }
 
         function handleRealtimeUpdate(type, payload) {
@@ -2392,66 +2736,70 @@ else if (sectionId === 'chat') {
 async function saveNote() {
     const title = document.getElementById('noteTitle');
     const course = document.getElementById('noteCourse');
-    const content = document.getElementById('noteContent');
     const noteFilesInput = document.getElementById('noteFiles');
     
-    if (!title || !course || !content) return;
+    if (!title || !course || !noteFilesInput) return;
+    
+    // Validate required fields
+    if (!title.value.trim()) {
+        alert('Please enter a note title');
+        title.focus();
+        return;
+    }
+    
+    if (!course.value.trim()) {
+        alert('Please enter a course');
+        course.focus();
+        return;
+    }
+    
+    if (!noteFilesInput.files.length) {
+        alert('Please select a file to upload');
+        return;
+    }
     
     try {
-        let fileData = null;
-        
-        // Upload file if exists
-        if (noteFilesInput.files.length > 0) {
-            const file = noteFilesInput.files[0];
-            fileData = await uploadFileToStorage(file, 'notes', currentUser.id);
-        }
+        // Upload file
+        const file = noteFilesInput.files[0];
+        const fileData = await uploadFileToStorage(file, 'notes', currentUser.id);
         
         const noteData = {
-            title: title.value,
-            course: course.value,
-            content: content.value,
+            title: title.value.trim(),
+            course: course.value.trim(),
             user_id: currentUser.id,
-            created_at: new Date()
+            created_at: new Date().toISOString(),
+            file_url: fileData.url,
+            file_name: fileData.name,
+            file_type: fileData.type
         };
-        
-        // Add file data if uploaded
-        if (fileData) {
-            noteData.file_url = fileData.url;
-            noteData.file_name = fileData.name;
-            noteData.file_type = fileData.type;
-        }
         
         const { error } = await supabase.from('notes').insert([noteData]);
         
         if (error) throw error;
         
+        // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('addNoteModal'));
         if (modal) modal.hide();
         
-        const addNoteForm = document.getElementById('addNoteForm');
-        if (addNoteForm) addNoteForm.reset();
+        document.getElementById('addNoteForm').reset();
+        document.getElementById('noteFilesPreview').innerHTML = '';
         
-        // Clear file preview
-        const noteFilesPreview = document.getElementById('noteFilesPreview');
-        if (noteFilesPreview) noteFilesPreview.innerHTML = '';
-        
-        // Real-time update will handle the refresh
+        showNotification('Note saved successfully!');
         
     } catch (error) {
+        console.error('Error saving note:', error);
         alert('Error saving note: ' + error.message);
     }
 }
 
 // Save new assignment with file upload
-// Enhanced version with validation
 async function saveAssignment() {
     const title = document.getElementById('assignmentTitle');
     const course = document.getElementById('assignmentCourse');
-    const description = document.getElementById('assignmentDescription');
     const dueDate = document.getElementById('assignmentDueDate');
     const assignmentFilesInput = document.getElementById('assignmentFiles');
     
-    if (!title || !course || !description || !dueDate) return;
+    if (!title || !course || !assignmentFilesInput) return;
     
     // Validate required fields
     if (!title.value.trim()) {
@@ -2466,127 +2814,120 @@ async function saveAssignment() {
         return;
     }
     
+    if (!assignmentFilesInput.files.length) {
+        alert('Please select a file to upload');
+        return;
+    }
+    
     try {
-        let fileData = null;
-        
-        // Upload file if exists
-        if (assignmentFilesInput.files.length > 0) {
-            const file = assignmentFilesInput.files[0];
-            fileData = await uploadFileToStorage(file, 'assignments', currentUser.id);
-        }
-        
-        // FIX: Convert empty due_date to null
-        const dueDateValue = dueDate.value.trim() === '' ? null : dueDate.value;
+        // Upload file
+        const file = assignmentFilesInput.files[0];
+        const fileData = await uploadFileToStorage(file, 'assignments', currentUser.id);
         
         const assignmentData = {
             title: title.value.trim(),
             course: course.value.trim(),
-            description: description.value.trim(),
-            due_date: dueDateValue, // This will be null if empty
+            due_date: dueDate.value || null,
             user_id: currentUser.id,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            file_url: fileData.url,
+            file_name: fileData.name,
+            file_type: fileData.type
         };
-        
-        // Add file data if uploaded
-        if (fileData) {
-            assignmentData.file_url = fileData.url;
-            assignmentData.file_name = fileData.name;
-            assignmentData.file_type = fileData.type;
-        }
-        
-        console.log('📦 Saving assignment:', assignmentData);
         
         const { error } = await supabase.from('assignments').insert([assignmentData]);
         
         if (error) throw error;
         
-        // Success - close modal and reset form
+        // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('addAssignmentModal'));
         if (modal) modal.hide();
         
-        const addAssignmentForm = document.getElementById('addAssignmentForm');
-        if (addAssignmentForm) addAssignmentForm.reset();
+        document.getElementById('addAssignmentForm').reset();
+        document.getElementById('assignmentFilesPreview').innerHTML = '';
         
-        // Clear file preview
-        const assignmentFilesPreview = document.getElementById('assignmentFilesPreview');
-        if (assignmentFilesPreview) assignmentFilesPreview.innerHTML = '';
-        
-        // Show success message
         showNotification('Assignment saved successfully!');
         
     } catch (error) {
-        console.error('❌ Error saving assignment:', error);
+        console.error('Error saving assignment:', error);
         alert('Error saving assignment: ' + error.message);
     }
 }
 
 // Save new past question with file upload
-// Save new past question with file upload - UPDATED VERSION
 async function savePastQuestion() {
     const title = document.getElementById('pastQuestionTitle');
     const course = document.getElementById('pastQuestionCourse');
     const year = document.getElementById('pastQuestionYear');
     const pastQuestionFileInput = document.getElementById('pastQuestionFile');
     
-    if (!title || !course || !year) {
-        alert('Please fill in all required fields');
+    if (!title || !course || !year || !pastQuestionFileInput) return;
+    
+    // Validate required fields
+    if (!title.value.trim()) {
+        alert('Please enter a title');
+        title.focus();
+        return;
+    }
+    
+    if (!course.value.trim()) {
+        alert('Please enter a course');
+        course.focus();
+        return;
+    }
+    
+    if (!year.value) {
+        alert('Please enter a year');
+        year.focus();
+        return;
+    }
+    
+    if (!pastQuestionFileInput.files.length) {
+        alert('Please select a file to upload');
         return;
     }
     
     try {
-        let fileData = null;
-        
-        // Upload file if exists
-        if (pastQuestionFileInput && pastQuestionFileInput.files.length > 0) {
-            const file = pastQuestionFileInput.files[0];
-            console.log('📤 Starting file upload...');
-            fileData = await uploadFileToStorage(file, 'past-questions', currentUser.id);
-            console.log('✅ File upload completed:', fileData);
-        }
+        // Upload file
+        const file = pastQuestionFileInput.files[0];
+        const fileData = await uploadFileToStorage(file, 'past-questions', currentUser.id);
         
         const pastQuestionData = {
-            title: title.value,
-            course: course.value,
+            title: title.value.trim(),
+            course: course.value.trim(),
             year: year.value,
             user_id: currentUser.id,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            file_url: fileData.url,
+            file_name: fileData.name,
+            file_type: fileData.type
         };
-        
-        // Add file data if uploaded
-        if (fileData) {
-            pastQuestionData.file_url = fileData.url;
-            pastQuestionData.file_name = fileData.name;
-            pastQuestionData.file_type = fileData.type;
-        }
-        
-        console.log('📦 Saving past question data:', pastQuestionData);
         
         const { error } = await supabase.from('past_questions').insert([pastQuestionData]);
         
         if (error) throw error;
         
+        // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('addPastQuestionModal'));
         if (modal) modal.hide();
         
-        const addPastQuestionForm = document.getElementById('addPastQuestionForm');
-        if (addPastQuestionForm) addPastQuestionForm.reset();
+        document.getElementById('addPastQuestionForm').reset();
+        document.getElementById('pastQuestionFilePreview').innerHTML = '';
         
-        // Clear file preview
-        const pastQuestionFilePreview = document.getElementById('pastQuestionFilePreview');
-        if (pastQuestionFilePreview) pastQuestionFilePreview.innerHTML = '';
-        
-        // Show success message
         showNotification('Past question saved successfully!');
         
-        // Refresh the past questions list
-        if (document.getElementById('past-questions').classList.contains('active')) {
-            loadPastQuestions();
-        }
-        
     } catch (error) {
-        console.error('❌ Error saving past question:', error);
+        console.error('Error saving past question:', error);
         alert('Error saving past question: ' + error.message);
     }
+}
+function createDownloadButton(fileUrl, fileName) {
+    return `
+        <button class="btn btn-sm btn-outline-primary" 
+                onclick="forceDownload('${fileUrl}', '${fileName}')">
+            <i class="fas fa-download me-1"></i>Download
+        </button>
+    `;
 }
 
         // Profile Management - FIXED: Remove updated_at field
@@ -2720,22 +3061,34 @@ async function savePastQuestion() {
 async function uploadFileToStorage(file, bucketName, folder = '') {
     try {
         const fileExt = file.name.split('.').pop();
+        
+        // REMOVE the "public/" prefix from the file path
+        // Supabase automatically makes files public when you use getPublicUrl()
         const fileName = `${folder}/${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
         
-        console.log('📤 Uploading file to:', bucketName, 'File:', file.name);
+        console.log('📤 UPLOAD DETAILS:');
+        console.log('  Bucket:', bucketName);
+        console.log('  File name:', file.name);
+        console.log('  Storage path:', fileName);
         
         const { data, error } = await supabase.storage
             .from(bucketName)
             .upload(fileName, file);
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Upload failed:', error);
+            throw error;
+        }
 
-        // Get public URL
+        // Get public URL - this is correct
         const { data: { publicUrl } } = supabase.storage
             .from(bucketName)
             .getPublicUrl(fileName);
 
-        console.log('✅ File uploaded successfully:', publicUrl);
+        console.log('✅ UPLOAD SUCCESS:');
+        console.log('  Public URL:', publicUrl);
+        console.log('  File name:', file.name);
+        console.log('  File type:', file.type);
         
         return {
             url: publicUrl,
@@ -2744,13 +3097,10 @@ async function uploadFileToStorage(file, bucketName, folder = '') {
         };
 
     } catch (error) {
-        console.error('❌ Error uploading file:', error);
+        console.error('❌ Upload error:', error);
         throw error;
     }
 }
-
-// Make it globally available
-window.uploadFileToStorage = uploadFileToStorage;
 
 // Add this function anywhere in your JavaScript (preferably with other utility functions)
 function getInitials(name) {
@@ -2892,7 +3242,7 @@ function previewFile(element, fileType) {
 }
 
 // Show file preview modal
-function showFilePreviewModal(file, fileType) {
+function showFilePreviewModal(fileUrl, fileType, fileName) {
     // Remove existing preview modal if any
     const existingModal = document.getElementById('filePreviewModal');
     if (existingModal) {
@@ -2904,17 +3254,20 @@ function showFilePreviewModal(file, fileType) {
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">File Preview</h5>
+                        <h5 class="modal-title">Preview: ${fileName || 'File'}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body text-center">
                         <div id="filePreviewContent">
-                            <p>Loading preview...</p>
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading preview...</span>
+                            </div>
+                            <p class="mt-2">Loading preview...</p>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadFile('${file.name}', '${fileType}')">
+                        <button type="button" class="btn btn-primary" onclick="downloadFile('${fileUrl}', '${fileName}')">
                             <i class="fas fa-download me-2"></i>Download
                         </button>
                     </div>
@@ -2928,8 +3281,8 @@ function showFilePreviewModal(file, fileType) {
     const modal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
     modal.show();
 
-    // Load file preview based on file type
-    loadFilePreview(file, fileType);
+    // Load file preview
+    loadUploadedFilePreview(fileUrl, fileType, fileName);
 }
 
 // Load file preview based on file type
@@ -3032,77 +3385,97 @@ function loadFilePreview(file, fileType) {
             
         console.log('🎉 CampusNote Real-time Platform Ready!');
         });
-        // ==================== DOWNLOAD & PREVIEW FUNCTIONS ====================
+       // ==================== DOWNLOAD & PREVIEW FUNCTIONS ====================
 
-// Download file from URL
-function downloadFile(fileUrl, fileName) {
+// Download file from Supabase storage - CORRECTED VERSION
+// Force direct file download
+async function downloadFile(fileUrl, fileName) {
     try {
-        console.log('📥 Downloading file:', fileName, 'from:', fileUrl);
+        console.log('📥 Downloading file:', fileName);
+        console.log('🔗 File URL:', fileUrl);
         
-        // Create a temporary anchor element
+        // Fix the URL if it has duplicate "public" path
+        let downloadUrl = fileUrl;
+        if (fileUrl.includes('/public/public/')) {
+            downloadUrl = fileUrl.replace('/public/public/', '/public/');
+            console.log('🔄 Fixed URL:', downloadUrl);
+        }
+        
+        // Method 1: Try to fetch and download as blob (most reliable)
+        console.log('🔄 Attempting blob download...');
+        const response = await fetch(downloadUrl);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        
+        // Check if we got a valid file
+        if (blob.size === 0) {
+            throw new Error('Downloaded file is empty');
+        }
+        
+        console.log('✅ File blob created:', {
+            size: blob.size,
+            type: blob.type
+        });
+        
+        // Create download link
+        const blobUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = fileUrl;
+        link.href = blobUrl;
         link.download = fileName || 'download';
-        link.target = '_blank';
         
-        // Trigger download
+        // Append to body, click, and remove
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        // Show success notification
-        showNotification(`Downloading ${fileName || 'file'}...`);
+        // Clean up blob URL
+        window.URL.revokeObjectURL(blobUrl);
+        
+        showNotification(`✅ Downloading ${fileName || 'file'}...`);
         
     } catch (error) {
-        console.error('❌ Download error:', error);
-        alert('Error downloading file: ' + error.message);
+        console.error('❌ Blob download failed:', error);
+        
+        // Method 2: Fallback to direct download
+        try {
+            console.log('🔄 Trying direct download fallback...');
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = fileName || 'download';
+            link.target = '_blank';
+            
+            // Force download attribute
+            link.setAttribute('download', fileName || 'download');
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`📥 Downloading ${fileName || 'file'}...`);
+            
+        } catch (fallbackError) {
+            console.error('❌ Direct download also failed:', fallbackError);
+            
+            // Method 3: Final fallback - open in new tab
+            try {
+                console.log('🔄 Opening in new tab as last resort...');
+                window.open(fileUrl, '_blank');
+                showNotification(`🔗 Opening ${fileName || 'file'} in new tab...`);
+            } catch (finalError) {
+                console.error('❌ All download methods failed:', finalError);
+                alert('❌ Unable to download file. Please check the file URL or try again.');
+            }
+        }
     }
 }
 
-// Preview uploaded file (for images and PDFs)
+// Keep your existing previewUploadedFile, loadUploadedFilePreview, etc. functions below
 function previewUploadedFile(fileUrl, fileType, fileName) {
-    console.log('👀 Previewing file:', fileName, 'Type:', fileType);
-    
-    // Remove existing preview modal if any
-    const existingModal = document.getElementById('filePreviewModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-
-    const modalHTML = `
-        <div class="modal fade" id="filePreviewModal" tabindex="-1">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Preview: ${fileName || 'File'}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <div id="filePreviewContent">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2">Loading preview...</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadFile('${fileUrl}', '${fileName}')">
-                            <i class="fas fa-download me-2"></i>Download
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    const modal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
-    modal.show();
-
-    // Load file preview based on file type
-    loadUploadedFilePreview(fileUrl, fileType, fileName);
+    // ... your existing preview function
 }
 
 // Load preview for uploaded files
@@ -3165,7 +3538,9 @@ function handlePreviewError(imgElement) {
 
 // Make functions global
 window.downloadFile = downloadFile;
-window.previewUploadedFile = previewUploadedFile;
-    </script>
+window.previewUploadedFile = previewUploadedFile; 
+window.loadUploadedFilePreview = loadUploadedFilePreview;
+       
+</script>
 </body>
 </html>

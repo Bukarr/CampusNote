@@ -73,6 +73,7 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
+            width: 100%;
         }
         
         .bottom-nav-item {
@@ -509,8 +510,7 @@
             <a class="navbar-brand" href="#">
                 <i class="fas fa-book me-2"></i>CampusNote <span class="real-time-indicator"></span>
             </a>
-            <!-- REPLACE BOTH authButtons AND userDropdown WITH THIS -->
-<div class="nav-item dropdown" id="userMenu">
+            <div class="nav-item dropdown" id="userMenu">
     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="fas fa-user" id="userIcon"></i>
     </a>
@@ -555,7 +555,7 @@
                         </div>
                     </form>
                     <div class="text-center mt-3">
-                        <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
+                        <p>Don't have an account? <a href="#" id="showSignupFromLogin">Sign up</a></p>
                     </div>
                     <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
                 </div>
@@ -595,7 +595,7 @@
                         </div>
                     </form>
                     <div class="text-center mt-3">
-                        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+                        <p>Already have an account? <a href="#" id="showLoginFromSignup">Login</a></p>
                     </div>
                     <div id="signupError" class="alert alert-danger mt-3" style="display: none;"></div>
                 </div>
@@ -603,7 +603,7 @@
         </div>
 
         <!-- Dashboard Section -->
-        <div id="dashboard" class="section pt-5 pt-md-3 pb-5">
+        <div id="dashboard" class="section main-section pt-5 pt-md-3 pb-5">
             <div class="hero-section">
                 <div class="container text-center">
                     <h1 class="display-5 fw-bold">Welcome to CampusNote <span class="real-time-indicator"></span></h1>
@@ -691,7 +691,7 @@
         </div>
 
         <!-- Notes Section -->
-        <div id="notes" class="section pt-5 pt-md-3 pb-5">
+        <div id="notes" class="section main-section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Lecture Notes <span class="real-time-indicator"></span></h2>
@@ -715,7 +715,7 @@
         </div>
 
         <!-- Assignments Section -->
-        <div id="assignments" class="section pt-5 pt-md-3 pb-5">
+        <div id="assignments" class="section main-section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Assignments <span class="real-time-indicator"></span></h2>
@@ -739,7 +739,7 @@
         </div>
 
         <!-- Past Questions Section -->
-        <div id="past-questions" class="section pt-5 pt-md-3 pb-5">
+        <div id="past-questions" class="section main-section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2>Past Questions <span class="real-time-indicator"></span></h2>
@@ -763,7 +763,7 @@
         </div>
 
         <!-- Chat Section -->
-        <div id="chat" class="section pt-5 pt-md-3 pb-5">
+        <div id="chat" class="section main-section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <h2 class="mb-4">Chat <span class="real-time-indicator"></span></h2>
                 <div class="row">
@@ -812,7 +812,7 @@
         </div>
 
         <!-- Profile Section -->
-        <div id="profile" class="section pt-5 pt-md-3 pb-5">
+        <div id="profile" class="section main-section pt-5 pt-md-3 pb-5">
             <div class="container">
                 <div class="row">
                     <div class="col-md-4 mb-4">
@@ -1072,130 +1072,211 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
         function initializeApp() {
             console.log('🔧 Initializing real-time app');
-            if (window.innerWidth <= 768) {
-                setupMobileNavigation();
-            }
+
         }
 
         function setupEventListeners() {
     console.log('🔧 Setting up event listeners');
+
+    // Switch between login and signup forms (header links)
+    const showLoginLink = document.getElementById('showLogin');
+    const showSignupLink = document.getElementById('showSignup');
     
-    // Remove old auth button listeners and add new dropdown listeners
-    const dropdownLoginBtn = document.getElementById('dropdownLoginBtn');
-    const dropdownSignupBtn = document.getElementById('dropdownSignupBtn');
-    const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+    if (showLoginLink) {
+        showLoginLink.addEventListener('click', showLoginForm);
+        console.log('✅ Show login link listener added');
+    }
     
-    if (dropdownLoginBtn) dropdownLoginBtn.addEventListener('click', showLoginForm);
-    if (dropdownSignupBtn) dropdownSignupBtn.addEventListener('click', showSignupForm);
-    if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+    if (showSignupLink) {
+        showSignupLink.addEventListener('click', showSignupForm);
+        console.log('✅ Show signup link listener added');
+    }
     
-    // Profile navigation from dropdown
-    document.querySelectorAll('#authenticatedMenu [data-section="profile"]').forEach(item => {
-        item.addEventListener('click', function(e) {
+    // In-form links (Don't have account? / Already have account?)
+    const showSignupFromLogin = document.getElementById('showSignupFromLogin');
+    const showLoginFromSignup = document.getElementById('showLoginFromSignup');
+    
+    if (showSignupFromLogin) {
+        showSignupFromLogin.addEventListener('click', showSignupForm);
+        console.log('✅ Show signup from login link listener added');
+    }
+    
+    if (showLoginFromSignup) {
+        showLoginFromSignup.addEventListener('click', showLoginForm);
+        console.log('✅ Show login from signup link listener added');
+    }
+    
+    // Login form submission
+    const loginForm = document.getElementById('loginFormElement');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+        console.log('✅ Login form event listener added');
+    }
+    
+    // Signup form submission
+    const signupForm = document.getElementById('signupFormElement');
+    if (signupForm) {
+        signupForm.addEventListener('submit', handleSignup);
+        console.log('✅ Signup form event listener added');
+    }
+    // Use event delegation for dynamic elements
+    document.addEventListener('click', function(e) {
+        console.log('🎯 Click event on:', e.target);
+        
+        // Handle dropdown login
+        if (e.target.id === 'dropdownLoginBtn' || e.target.closest('#dropdownLoginBtn')) {
             e.preventDefault();
+            e.stopPropagation();
+            console.log('🔄 Login clicked from dropdown');
+            showLoginForm();
+            return;
+        }
+        
+        // Handle dropdown signup
+        if (e.target.id === 'dropdownSignupBtn' || e.target.closest('#dropdownSignupBtn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔄 Signup clicked from dropdown');
+            showSignupForm();
+            return;
+        }
+        
+        // Handle dropdown logout
+        if (e.target.id === 'dropdownLogoutBtn' || e.target.closest('#dropdownLogoutBtn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔄 Logout clicked from dropdown');
+            handleLogout();
+            return;
+        }
+        
+        // Handle profile navigation
+        if (e.target.closest('[data-section="profile"]')) {
+            e.preventDefault();
+            e.stopPropagation();
             switchSection('profile');
-            // Close dropdown
             const dropdown = bootstrap.Dropdown.getInstance(document.querySelector('#userMenu .dropdown-toggle'));
             if (dropdown) dropdown.hide();
+            return;
+        }
+    });
+
+    // Direct event listeners as backup
+    setTimeout(() => {
+        const dropdownLoginBtn = document.getElementById('dropdownLoginBtn');
+        const dropdownSignupBtn = document.getElementById('dropdownSignupBtn');
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        
+        if (dropdownLoginBtn) {
+            dropdownLoginBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('🔄 Login clicked (direct)');
+                showLoginForm();
+            };
+        }
+        
+        if (dropdownSignupBtn) {
+            dropdownSignupBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('🔄 Signup clicked (direct)');
+                showSignupForm();
+            };
+        }
+        
+        if (dropdownLogoutBtn) {
+            dropdownLogoutBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log('🔄 Logout clicked (direct)');
+                handleLogout();
+            };
+        }
+    }, 500);
+
+    // Rest of your existing event listeners...
+    // Bottom navigation
+    document.querySelectorAll('.bottom-nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+            if (!currentUser) {
+                alert('Please log in to access this section');
+                showLoginForm();
+                return;
+            }
+            const section = this.getAttribute('data-section');
+            console.log('📱 Switching to section:', section);
+            switchSection(section);
+            updateBottomNav(this);
         });
     });
 
+    // Modal forms
+    const saveNoteBtn = document.getElementById('saveNoteBtn');
+    const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
+    const savePastQuestionBtn = document.getElementById('savePastQuestionBtn');
+    
+    if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNote);
+    if (saveAssignmentBtn) saveAssignmentBtn.addEventListener('click', saveAssignment);
+    if (savePastQuestionBtn) savePastQuestionBtn.addEventListener('click', savePastQuestion);
+    
+    // Profile form
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) profileForm.addEventListener('submit', updateProfile);
+    
+    // Chat
+    const sendMessageBtn = document.getElementById('sendMessage');
+    const messageInput = document.getElementById('messageInput');
+    
+    if (sendMessageBtn) sendMessageBtn.addEventListener('click', sendMessage);
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    }
+
+    // Section navigation from cards
+    document.querySelectorAll('[data-section]').forEach(link => {
+        if (!link.classList.contains('bottom-nav-item')) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.getAttribute('data-section');
+                console.log('🔗 Navigation to:', section);
+                switchSection(section);
+                updateBottomNavForSection(section);
+            });
+        }
+    });
+    
+    console.log('✅ Event listeners setup complete');
 }
-            // Bottom navigation
-            document.querySelectorAll('.bottom-nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const section = this.getAttribute('data-section');
-                    console.log('📱 Switching to section:', section);
-                    switchSection(section);
-                    updateBottomNav(this);
-                });
-            });
-
-            // Modal forms
-            const saveNoteBtn = document.getElementById('saveNoteBtn');
-            const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
-            const savePastQuestionBtn = document.getElementById('savePastQuestionBtn');
-            
-            if (saveNoteBtn) saveNoteBtn.addEventListener('click', saveNote);
-            if (saveAssignmentBtn) saveAssignmentBtn.addEventListener('click', saveAssignment);
-            if (savePastQuestionBtn) savePastQuestionBtn.addEventListener('click', savePastQuestion);
-            
-            // Profile form
-            const profileForm = document.getElementById('profileForm');
-            if (profileForm) profileForm.addEventListener('submit', updateProfile);
-            
-            // Chat
-            const sendMessageBtn = document.getElementById('sendMessage');
-            const messageInput = document.getElementById('messageInput');
-            
-            if (sendMessageBtn) sendMessageBtn.addEventListener('click', sendMessage);
-            if (messageInput) {
-                messageInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') sendMessage();
-                });
-            }
-
-            // Section navigation from cards
-            document.querySelectorAll('[data-section]').forEach(link => {
-                if (!link.classList.contains('bottom-nav-item')) {
-                    link.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const section = this.getAttribute('data-section');
-                        console.log('🔗 Navigation to:', section);
-                        switchSection(section);
-                        updateBottomNavForSection(section);
-                    });
-                }
-            });
 
         
 
-        function setupMobileNavigation() {
-            const authButtons = document.getElementById('authButtons');
-            if (!authButtons) return;
-            
-            if (window.innerWidth <= 768) {
-                authButtons.classList.add('dropdown');
-                authButtons.innerHTML = `
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user"></i>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="mobileLoginBtn">Login</a></li>
-                        <li><a class="dropdown-item" href="#" id="mobileSignupBtn">Sign Up</a></li>
-                    </ul>
-                `;
-                
-                setTimeout(() => {
-                    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
-                    const mobileSignupBtn = document.getElementById('mobileSignupBtn');
-                    if (mobileLoginBtn) mobileLoginBtn.addEventListener('click', showLoginForm);
-                    if (mobileSignupBtn) mobileSignupBtn.addEventListener('click', showSignupForm);
-                }, 100);
-            }
-        }
-
         async function checkAuthState() {
-            console.log('🔐 Checking authentication state');
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                
-                if (session) {
-                    console.log('✅ User authenticated:', session.user.email);
-                    currentUser = session.user;
-                    await loadUserProfile();
-                    showAuthenticatedUI();
-                    loadDashboardData();
-                    setupRealtimeSubscriptions();
-                } else {
-                    console.log('❌ No active session');
-                    showUnauthenticatedUI();
-                }
-            } catch (error) {
-                console.error('Auth check error:', error);
-                showUnauthenticatedUI();
-            }
+    console.log('🔐 Checking authentication state');
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+            console.error('❌ Session error:', error);
+            showUnauthenticatedUI();
+            return;
         }
+        
+        if (session) {
+            console.log('✅ User authenticated:', session.user.email);
+            currentUser = session.user;
+            await loadUserProfile();
+            showAuthenticatedUI();
+            loadDashboardData();
+            setupRealtimeSubscriptions();
+        } else {
+            console.log('❌ No active session');
+            showUnauthenticatedUI();
+        }
+    } catch (error) {
+        console.error('Auth check error:', error);
+        showUnauthenticatedUI();
+    }
+}
 
         // Authentication functions
         function showLoginForm(e) { 
@@ -1213,59 +1294,144 @@ const supabase = createClient(supabaseUrl, supabaseKey)
         }
 
         async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const errorDiv = document.getElementById('loginError');
-            
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                
-                currentUser = data.user;
-                await loadUserProfile();
-                showAuthenticatedUI();
-                loadDashboardData();
-                setupRealtimeSubscriptions();
-                
-            } catch (error) {
-                if (errorDiv) {
-                    errorDiv.textContent = error.message;
-                    errorDiv.style.display = 'block';
-                }
-            }
+    e.preventDefault();
+    console.log('🔐 Login attempt started');
+    
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    if (!email || !password) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Please enter both email and password';
+            errorDiv.style.display = 'block';
         }
+        return;
+    }
+    
+    try {
+        console.log('📧 Attempting login for:', email);
+        const { data, error } = await supabase.auth.signInWithPassword({ 
+            email: email, 
+            password: password 
+        });
+        
+        if (error) {
+            console.error('❌ Login error:', error);
+            throw error;
+        }
+        
+        console.log('✅ Login successful for:', data.user.email);
+        currentUser = data.user;
+        
+        // Load profile and update UI
+        await loadUserProfile();
+        showAuthenticatedUI();
+        loadDashboardData();
+        setupRealtimeSubscriptions();
+        
+        // Clear the form
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        if (errorDiv) errorDiv.style.display = 'none';
+        
+    } catch (error) {
+        console.error('❌ Login failed:', error);
+        if (errorDiv) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        }
+    }
+}
 
         async function handleSignup(e) {
-            e.preventDefault();
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const level = document.getElementById('signupLevel').value;
-            const department = document.getElementById('signupDepartment').value;
-            const errorDiv = document.getElementById('signupError');
-            
-            try {
-                const { data, error } = await supabase.auth.signUp({
-                    email, password,
-                    options: { data: { name, level, department } }
-                });
-                if (error) throw error;
-                
-                await supabase.from('profiles').insert([{
-                    id: data.user.id, name, email, level, department, created_at: new Date()
-                }]);
-                
-                alert('Signup successful! Please check your email for verification.');
-                showLoginForm();
-                
-            } catch (error) {
-                if (errorDiv) {
-                    errorDiv.textContent = error.message;
-                    errorDiv.style.display = 'block';
-                }
-            }
+    e.preventDefault();
+    console.log('👤 Signup attempt started');
+    
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const level = document.getElementById('signupLevel').value;
+    const department = document.getElementById('signupDepartment').value;
+    const errorDiv = document.getElementById('signupError');
+    
+    // Validate required fields
+    if (!name || !email || !password || !level || !department) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Please fill in all fields';
+            errorDiv.style.display = 'block';
         }
+        return;
+    }
+    
+    if (password.length < 6) {
+        if (errorDiv) {
+            errorDiv.textContent = 'Password must be at least 6 characters';
+            errorDiv.style.display = 'block';
+        }
+        return;
+    }
+    
+    try {
+        console.log('📝 Attempting signup for:', email);
+        
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: { 
+                data: { 
+                    name: name, 
+                    level: level, 
+                    department: department 
+                } 
+            }
+        });
+        
+        if (error) {
+            console.error('❌ Signup error:', error);
+            throw error;
+        }
+        
+        console.log('✅ Signup successful for:', data.user.email);
+        
+        // Create profile in database
+        try {
+            const { error: profileError } = await supabase.from('profiles').insert([{
+                id: data.user.id,
+                name: name,
+                email: email,
+                level: level,
+                department: department,
+                created_at: new Date().toISOString()
+            }]);
+            
+            if (profileError) {
+                console.warn('⚠️ Profile creation warning:', profileError);
+                // Don't throw error - user can still login and profile might be created via trigger
+            }
+        } catch (profileError) {
+            console.warn('⚠️ Profile creation issue:', profileError);
+            // Continue anyway - profile might be created via database trigger
+        }
+        
+        // Show success message
+        alert('Signup successful! Please check your email for verification.');
+        
+        // Clear the form
+        document.getElementById('signupFormElement').reset();
+        if (errorDiv) errorDiv.style.display = 'none';
+        
+        // Switch to login form
+        showLoginForm();
+        
+    } catch (error) {
+        console.error('❌ Signup failed:', error);
+        if (errorDiv) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        }
+    }
+}
 
         async function handleLogout() {
             try {
@@ -1279,11 +1445,35 @@ const supabase = createClient(supabaseUrl, supabaseKey)
         }
 
         function removeAllSubscriptions() {
-            if (chatSubscription) supabase.removeSubscription(chatSubscription);
-            if (notesSubscription) supabase.removeSubscription(notesSubscription);
-            if (assignmentsSubscription) supabase.removeSubscription(assignmentsSubscription);
-            if (pastQuestionsSubscription) supabase.removeSubscription(pastQuestionsSubscription);
+    console.log('🔕 Removing all real-time subscriptions');
+    
+    try {
+        if (chatSubscription) {
+            supabase.removeChannel(chatSubscription);
+            console.log('✅ Chat subscription removed');
         }
+        if (notesSubscription) {
+            supabase.removeChannel(notesSubscription);
+            console.log('✅ Notes subscription removed');
+        }
+        if (assignmentsSubscription) {
+            supabase.removeChannel(assignmentsSubscription);
+            console.log('✅ Assignments subscription removed');
+        }
+        if (pastQuestionsSubscription) {
+            supabase.removeChannel(pastQuestionsSubscription);
+            console.log('✅ Past questions subscription removed');
+        }
+    } catch (error) {
+        console.error('❌ Error removing subscriptions:', error);
+    }
+    
+    // Reset subscription variables
+    chatSubscription = null;
+    notesSubscription = null;
+    assignmentsSubscription = null;
+    pastQuestionsSubscription = null;
+}
 
         // User profile management
         async function loadUserProfile() {
@@ -1395,41 +1585,74 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 }
 
         // UI State Management
-        // UI State Management - UPDATED
 function showAuthenticatedUI() {
+    console.log('🔓 Showing authenticated UI');
+    
+    // Hide auth section
     const authSection = document.getElementById('auth-section');
+    if (authSection) {
+        authSection.classList.remove('active');
+        authSection.style.display = 'none';
+        console.log('✅ Auth section hidden');
+    }
     
-    if (authSection) authSection.classList.remove('active');
-    
+    // Show all main sections
     document.querySelectorAll('.section').forEach(section => {
-        if (section.id !== 'auth-section') section.style.display = 'none';
+        if (section.id !== 'auth-section') {
+            section.style.display = 'block';
+        }
     });
     
-    // Update user menu for authenticated state
+    // Show bottom navigation with full width
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) {
+        bottomNav.style.display = 'flex';
+        bottomNav.style.width = '100%';
+        bottomNav.style.visibility = 'visible';
+        console.log('✅ Bottom nav shown with full width');
+    }
+    
+    // Update user menu
     updateUserMenu(true);
     
+    // Switch to dashboard
     switchSection('dashboard');
 }
 
 function showUnauthenticatedUI() {
+    console.log('🔒 Showing unauthenticated UI');
+    
+    // Show auth section
     const authSection = document.getElementById('auth-section');
+    if (authSection) {
+        authSection.classList.add('active');
+        authSection.style.display = 'block';
+        console.log('✅ Auth section shown');
+    }
     
-    if (authSection) authSection.classList.add('active');
-    
+    // Hide all main sections
     document.querySelectorAll('.section').forEach(section => {
-        if (section.id !== 'auth-section') section.style.display = 'none';
+        if (section.id !== 'auth-section') {
+            section.style.display = 'none';
+        }
     });
     
-    // Update user menu for unauthenticated state
+    // Hide bottom navigation
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) {
+        bottomNav.style.display = 'none';
+        console.log('✅ Bottom nav hidden');
+    }
+    
+    // Update user menu
     updateUserMenu(false);
 }
-
-// New function to update user menu
 function updateUserMenu(isAuthenticated) {
     const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
     const authenticatedMenu = document.getElementById('authenticatedMenu');
     const userIcon = document.getElementById('userIcon');
-    const dropdownUserName = document.getElementById('dropdownUserName');
+    
+    console.log('🔄 Updating user menu, authenticated:', isAuthenticated);
     
     if (isAuthenticated && currentUser) {
         // Show authenticated menu
@@ -1437,6 +1660,7 @@ function updateUserMenu(isAuthenticated) {
         if (authenticatedMenu) authenticatedMenu.style.display = 'block';
         
         // Update user info
+        const dropdownUserName = document.getElementById('dropdownUserName');
         if (dropdownUserName && currentUser.profile) {
             dropdownUserName.textContent = currentUser.profile.name;
         }
@@ -1457,19 +1681,45 @@ function updateUserMenu(isAuthenticated) {
     }
 }
 
-        function switchSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-                section.style.display = 'none';
-            });
-            
-            // Show target section
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-                targetSection.style.display = 'block';
-            }
+window.updateUserMenu = updateUserMenu;
+function switchSection(sectionId) {
+    console.log('🔄 Switching to section:', sectionId);
+    
+    // Don't allow access to main sections without authentication
+    if (sectionId !== 'auth-section' && !currentUser) {
+        console.log('🚫 Unauthorized access attempt to:', sectionId);
+        showUnauthenticatedUI();
+        return;
+    }
+    
+    // Hide all sections (using your div with class)
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+        section.style.display = 'none';
+    });
+    
+    // Show target section
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+    }
+    
+    // Load section data
+    const sectionHandlers = {
+        'dashboard': () => { console.log('📊 Loading dashboard'); loadDashboardData(); },
+        'notes': () => { console.log('📝 Loading notes'); loadNotes(); },
+        'assignments': () => { console.log('📋 Loading assignments'); loadAssignments(); },
+        'past-questions': () => { console.log('📚 Loading past questions'); loadPastQuestions(); },
+        'chat': () => { console.log('💬 Loading chat'); loadOnlineUsers(); },
+        'profile': () => { console.log('👤 Loading profile'); loadUserContributions(); }
+    };
+    
+    if (sectionHandlers[sectionId]) {
+        sectionHandlers[sectionId]();
+    }
+} 
+
 // ==================== CHAT FUNCTIONS ====================
 
 // Load online users for chat
@@ -1687,20 +1937,7 @@ window.initializeChat = function() {
     
     console.log('✅ Chat system setup complete');
 }
-            // Load section data
-            const sectionHandlers = {
-                'dashboard': () => { console.log('📊 Loading dashboard'); loadDashboardData(); },
-                'notes': () => { console.log('📝 Loading notes'); loadNotes(); },
-                'assignments': () => { console.log('📋 Loading assignments'); loadAssignments(); },
-                'past-questions': () => { console.log('📚 Loading past questions'); loadPastQuestions(); },
-                'chat': () => { console.log('💬 Loading chat'); loadOnlineUsers(); },
-                'profile': () => { console.log('👤 Loading profile'); loadUserContributions(); }
-            };
             
-            if (sectionHandlers[sectionId]) {
-                sectionHandlers[sectionId]();
-            }
-        }
 
         function updateBottomNav(activeItem) {
             document.querySelectorAll('.bottom-nav-item').forEach(item => {
@@ -2792,25 +3029,9 @@ function loadFilePreview(file, fileType) {
 
         // Window resize handler
         window.addEventListener('resize', function() {
-            if (window.innerWidth <= 768) {
-                setupMobileNavigation();
-            } else {
-                const authButtons = document.getElementById('authButtons');
-                if (authButtons && authButtons.classList.contains('dropdown')) {
-                    authButtons.classList.remove('dropdown');
-                    authButtons.innerHTML = `
-                        <button class="btn btn-outline-light me-2" id="loginBtn">Login</button>
-                        <button class="btn btn-light" id="signupBtn">Sign Up</button>
-                    `;
-                    const loginBtn = document.getElementById('loginBtn');
-                    const signupBtn = document.getElementById('signupBtn');
-                    if (loginBtn) loginBtn.addEventListener('click', showLoginForm);
-                    if (signupBtn) signupBtn.addEventListener('click', showSignupForm);
-                }
-            }
-        });
-
+            
         console.log('🎉 CampusNote Real-time Platform Ready!');
+        });
         // ==================== DOWNLOAD & PREVIEW FUNCTIONS ====================
 
 // Download file from URL

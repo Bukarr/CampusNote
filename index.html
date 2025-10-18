@@ -1732,7 +1732,11 @@
             checkAuthState();
             setupFileUploadHandlers();
             setupSearchFunctionality();
-        });
+            
+         // Initialize PWA
+    initializePWA();
+    setupNetworkDetection();
+});
 
         function initializeApp() {
             console.log('🔧 Initializing real-time app');

@@ -4758,6 +4758,186 @@ window.handleIframeError = function(iframe) {
     const container = iframe.parentElement;
     showUnsupportedFile(container, 'Failed to load document preview');
 };
+        // Enhanced PWA Service Worker Registration
+async function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('✅ Service Worker registered: ', registration);
+
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('🔄 Service Worker update found');
+                
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showNotification('New version available! Refresh to update.', 'info');
+                    }
+                });
+            });
+
+            // Track service worker state
+            if (registration.waiting) {
+                console.log('⏳ Service Worker waiting to activate');
+            }
+            if (registration.active) {
+                console.log('✅ Service Worker active');
+            }
+
+        } catch (registrationError) {
+            console.log('❌ Service Worker registration failed: ', registrationError);
+        }
+    } else {
+        console.log('❌ Service Worker not supported');
+    }
+}
+
+// Install Prompt Handling
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('📱 PWA install prompt available');
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Show custom install button (you can add this to your UI)
+    showInstallPromotion();
+});
+
+// Show install promotion
+function showInstallPromotion() {
+    // Create install button if it doesn't exist
+    if (!document.getElementById('installButton')) {
+        const installButton = document.createElement('button');
+        installButton.id = 'installButton';
+        installButton.className = 'btn btn-success position-fixed';
+        installButton.style.cssText = `
+            bottom: 100px;
+            right: 20px;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+        `;
+        installButton.innerHTML = '<i class="fas fa-download me-2"></i>Install App';
+        installButton.onclick = installPWA;
+        
+        document.body.appendChild(installButton);
+        
+        // Show button after a delay
+        setTimeout(() => {
+            installButton.style.display = 'block';
+        }, 5000);
+    }
+}
+
+// Install PWA
+async function installPWA() {
+    if (!deferredPrompt) {
+        showNotification('App installation not available', 'warning');
+        return;
+    }
+    
+    try {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            console.log('✅ User accepted the install prompt');
+            showNotification('App installed successfully!', 'success');
+            
+            // Hide the install button
+            const installButton = document.getElementById('installButton');
+            if (installButton) installButton.style.display = 'none';
+        } else {
+            console.log('❌ User dismissed the install prompt');
+        }
+        
+        // Clear the saved prompt since it can't be used again
+        deferredPrompt = null;
+        
+    } catch (error) {
+        console.error('❌ Install error:', error);
+        showNotification('Installation failed', 'error');
+    }
+}
+
+// Track app installation
+window.addEventListener('appinstalled', (evt) => {
+    console.log('🏠 CampusNote was installed successfully');
+    // You can track installations here
+});
+
+// Check if app is running as PWA
+function isRunningAsPWA() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone ||
+           document.referrer.includes('android-app://');
+}
+
+// Initialize PWA features
+function initializePWA() {
+    console.log('📱 Initializing PWA features');
+    
+    // Register service worker
+    registerServiceWorker();
+    
+    // Check if running as PWA
+    if (isRunningAsPWA()) {
+        console.log('🏠 Running as installed PWA');
+        document.body.classList.add('pwa-mode');
+        
+        // Add PWA-specific enhancements
+        enhanceForPWA();
+    } else {
+        console.log('🌐 Running in browser');
+    }
+}
+
+// Enhance UI for PWA
+function enhanceForPWA() {
+    // Hide browser UI elements that aren't needed in PWA
+    const style = document.createElement('style');
+    style.textContent = `
+        .pwa-mode .browser-only {
+            display: none !important;
+        }
+        
+        /* Add PWA-specific styles */
+        @media (display-mode: standalone) {
+            body {
+                -webkit-user-select: none;
+                user-select: none;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Network status detection for PWA
+function setupNetworkDetection() {
+    window.addEventListener('online', () => {
+        console.log('🌐 Online - connection restored');
+        showNotification('Connection restored', 'success');
+        document.body.classList.remove('offline');
+    });
+
+    window.addEventListener('offline', () => {
+        console.log('📴 Offline - connection lost');
+        showNotification('You are currently offline', 'warning');
+        document.body.classList.add('offline');
+    });
+
+    // Initial check
+    if (!navigator.onLine) {
+        document.body.classList.add('offline');
+        showNotification('You are currently offline', 'warning');
+    }
+}
 
 // ==================== LOCAL FILE PREVIEW FUNCTIONS ====================
 // Preview local file before upload

@@ -1096,6 +1096,36 @@
             text-align: center;
             padding: 40px;
         }
+        .user-link {
+    color: var(--primary-color);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+}
+.user-link:hover {
+    text-decoration: underline;
+}
+.mobile-back-btn {
+    transition: all 0.3s ease;
+}
+.mobile-back-btn:active {
+    transform: scale(0.95);
+}
+.note-description {
+    border-left: 3px solid var(--primary-color);
+}
+.user-initials {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 2rem;
+    margin: 0 auto;
+}
     </style>
 </head>
 <body>
@@ -1568,6 +1598,11 @@
                             <label for="noteCourse" class="form-label">Course *</label>
                             <input type="text" class="form-control" id="noteCourse" required>
                         </div>
+<div class="mb-3">
+    <label for="noteDescription" class="form-label">Description/Post</label>
+    <textarea class="form-control" id="noteDescription" rows="3" placeholder="Add a description or post about this note... (Optional)"></textarea>
+    <div class="form-text">This description will be visible to other users before downloading</div>
+</div>
                         <div class="mb-3">
                             <label for="noteFiles" class="form-label">Upload Note File *</label>
                             <input type="file" class="form-control" id="noteFiles" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" required>
@@ -1608,6 +1643,11 @@
                             <label for="assignmentDueDate" class="form-label">Due Date</label>
                             <input type="date" class="form-control" id="assignmentDueDate">
                         </div>
+                        <!-- Inside #addAssignmentForm, after due date field -->
+<div class="mb-3">
+    <label for="assignmentDescription" class="form-label">Description/Post</label>
+    <textarea class="form-control" id="assignmentDescription" rows="3" placeholder="Add a description about this assignment... (Optional)"></textarea>
+</div>
                         <div class="mb-3">
                             <label for="assignmentFiles" class="form-label">Upload Assignment File *</label>
                             <input type="file" class="form-control" id="assignmentFiles" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" required>
@@ -1648,6 +1688,11 @@
                             <label for="pastQuestionYear" class="form-label">Year *</label>
                             <input type="number" class="form-control" id="pastQuestionYear" min="2000" max="2030" required>
                         </div>
+                        <!-- Inside #addPastQuestionForm, after year field -->
+<div class="mb-3">
+    <label for="pastQuestionDescription" class="form-label">Description/Post</label>
+    <textarea class="form-control" id="pastQuestionDescription" rows="3" placeholder="Add a description about this past question... (Optional)"></textarea>
+</div>
                         <div class="mb-3">
                             <label for="pastQuestionFile" class="form-label">Upload Past Question File *</label>
                             <input type="file" class="form-control" id="pastQuestionFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
@@ -1723,6 +1768,9 @@
         let allAssignments = [];
         let allPastQuestions = [];
         let currentPreviewFile = null;
+        let navigationHistory = [];
+let isBackNavigation = false;
+let currentViewedUser = null;
 
         // DOM Content Loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -1734,6 +1782,7 @@
             setupSearchFunctionality();
             
          // Initialize PWA
+            setupBackNavigation();
     initializePWA();
     setupNetworkDetection();
 });
@@ -2644,44 +2693,64 @@
 
         window.updateUserMenu = updateUserMenu;
 
-        function switchSection(sectionId) {
-            console.log('🔄 Switching to section:', sectionId);
+        function switchSection(sectionId, fromBackNavigation = false) {
+    console.log('🔄 Switching to section:', sectionId, 'fromBack:', fromBackNavigation);
+    
+    // Don't allow access to main sections without authentication
+    if (sectionId !== 'auth-section' && !currentUser) {
+        console.log('🚫 Unauthorized access attempt to:', sectionId);
+        showUnauthenticatedUI();
+        return;
+    }
+    
+    // Update navigation history (unless this is a back navigation)
+    if (!fromBackNavigation && !isBackNavigation) {
+        const currentSection = document.querySelector('.section.active');
+        if (currentSection) {
+            navigationHistory.push(currentSection.id);
+            console.log('📚 Navigation history:', navigationHistory);
             
-            // Don't allow access to main sections without authentication
-            if (sectionId !== 'auth-section' && !currentUser) {
-                console.log('🚫 Unauthorized access attempt to:', sectionId);
-                showUnauthenticatedUI();
-                return;
-            }
-            
-            // Hide all sections (using your div with class)
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-                section.style.display = 'none';
-            });
-            
-            // Show target section
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-                targetSection.style.display = 'block';
-            }
-            
-            // Load section data
-            const sectionHandlers = {
-                'dashboard': () => { console.log('📊 Loading dashboard'); loadDashboardData(); },
-                'notes': () => { console.log('📝 Loading notes'); loadNotes(); },
-                'assignments': () => { console.log('📋 Loading assignments'); loadAssignments(); },
-                'past-questions': () => { console.log('📚 Loading past questions'); loadPastQuestions(); },
-                'chat': () => { console.log('💬 Loading chat'); loadChatUsers(); },
-                'profile': () => { console.log('👤 Loading profile'); loadUserContributions(); }
-            };
-            
-            if (sectionHandlers[sectionId]) {
-                sectionHandlers[sectionId]();
-            }
-        } 
-
+            // Update browser history
+            window.history.pushState({ section: sectionId }, '', `#${sectionId}`);
+        }
+    }
+    
+    isBackNavigation = false;
+    
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+        section.style.display = 'none';
+    });
+    
+    // Show target section
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+    }
+    
+    // Update bottom navigation
+    updateBottomNavForSection(sectionId);
+    
+    // Show/hide back button based on history and screen size
+    updateBackButtonVisibility();
+    
+    // Load section data
+    const sectionHandlers = {
+        'dashboard': () => { console.log('📊 Loading dashboard'); loadDashboardData(); },
+        'notes': () => { console.log('📝 Loading notes'); loadNotes(); },
+        'assignments': () => { console.log('📋 Loading assignments'); loadAssignments(); },
+        'past-questions': () => { console.log('📚 Loading past questions'); loadPastQuestions(); },
+        'chat': () => { console.log('💬 Loading chat'); loadChatUsers(); },
+        'profile': () => { console.log('👤 Loading profile'); loadUserContributions(); },
+        'user-profile': () => { console.log('👥 Loading user profile'); } // For viewing other users
+    };
+    
+    if (sectionHandlers[sectionId]) {
+        sectionHandlers[sectionId]();
+    }
+}
         // ==================== CHAT FUNCTIONS ====================
 
         // Load chat users for the sidebar
@@ -3815,38 +3884,50 @@ window.scrollChatToBottom = function() {
                 }
                 
                 container.innerHTML = data.map(note => `
-                    <div class="list-item" data-item-id="${note.id}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="list-item-title">${escapeHtml(note.title)}</div>
-                                <div class="list-item-meta">${escapeHtml(note.course)} • ${formatDate(note.created_at)}</div>
-                                <p class="mt-2">${escapeHtml(note.content)}</p>
-                                
-                                ${note.file_url ? `
-                                    <div class="file-attachment mt-2">
-                                        <i class="fas fa-paperclip me-1"></i>
-                                        <span class="file-name">${note.file_name || 'Attached file'}</span>
-                                        <div class="file-actions">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${note.file_url}', '${note.file_type}', '${note.file_name || 'File'}', 'notes')">
-                                                <i class="fas fa-eye me-1"></i>Preview
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${note.file_url}', '${note.file_name || 'download'}')">
-                                                <i class="fas fa-download me-1"></i>Download
-                                            </button>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="d-flex flex-column">
-                                ${note.user_id === currentUser?.id ? `
-                                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteNote('${note.id}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
+    <div class="list-item" data-item-id="${note.id}">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <div class="list-item-title">${escapeHtml(note.title)}</div>
+                <div class="list-item-meta">
+                    By <span class="user-link" onclick="viewUserProfile('${note.user_id}', '${escapeHtml(getUserNameFromNote(note))}')">${escapeHtml(getUserNameFromNote(note))}</span> • 
+                    ${escapeHtml(note.course)} • ${formatDate(note.created_at)}
+                </div>
+                
+                ${note.description ? `
+                    <div class="note-description mt-2 p-3 bg-light rounded">
+                        <p class="mb-0">${escapeHtml(note.description)}</p>
+                    </div>
+                ` : ''}
+                
+                ${note.file_url ? `
+                    <div class="file-attachment mt-2">
+                        <i class="fas fa-paperclip me-1"></i>
+                        <span class="file-name">${note.file_name || 'Attached file'}</span>
+                        <div class="file-actions">
+                            <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${note.file_url}', '${note.file_type}', '${note.file_name || 'File'}', 'notes')">
+                                <i class="fas fa-eye me-1"></i>Preview
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${note.file_url}', '${note.file_name || 'download'}')">
+                                <i class="fas fa-download me-1"></i>Download
+                            </button>
                         </div>
                     </div>
-                `).join('');
+                ` : ''}
+            </div>
+            <div class="d-flex flex-column">
+                ${note.user_id === currentUser?.id ? `
+                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteNote('${note.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                ` : `
+                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="viewUserProfile('${note.user_id}', '${escapeHtml(getUserNameFromNote(note))}')">
+                        <i class="fas fa-user"></i>
+                    </button>
+                `}
+            </div>
+        </div>
+    </div>
+`).join('');
                 
             } catch (error) {
                 container.innerHTML = `
@@ -3859,154 +3940,178 @@ window.scrollChatToBottom = function() {
         }
 
         async function loadAssignments() {
-            const container = document.getElementById('assignmentsContent');
-            if (!container) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('assignments')
-                    .select('*')
-                    .order('due_date', { ascending: true });
-                
-                if (error) throw error;
-                
-                // Store all assignments for search functionality
-                allAssignments = data || [];
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-tasks"></i>
-                            <h5>No Assignments Yet</h5>
-                            <p>Track your assignments and deadlines here</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
-                                <i class="fas fa-plus me-2"></i>Add Your First Assignment
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = data.map(assignment => `
-                    <div class="list-item" data-item-id="${assignment.id}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="list-item-title">${escapeHtml(assignment.title)}</div>
-                                <div class="list-item-meta">${escapeHtml(assignment.course)} • Due: ${formatDate(assignment.due_date)}</div>
-                                <p class="mt-2">${escapeHtml(assignment.description)}</p>
-                                
-                                ${assignment.file_url ? `
-                                    <div class="file-attachment mt-2">
-                                        <i class="fas fa-paperclip me-1"></i>
-                                        <span class="file-name">${assignment.file_name || 'Attached file'}</span>
-                                        <div class="file-actions">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${assignment.file_url}', '${assignment.file_type}', '${assignment.file_name || 'File'}', 'assignments')">
-                                                <i class="fas fa-eye me-1"></i>Preview
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${assignment.file_url}', '${assignment.file_name || 'download'}')">
-                                                <i class="fas fa-download me-1"></i>Download
-                                            </button>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="d-flex flex-column">
-                                ${assignment.user_id === currentUser?.id ? `
-                                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteAssignment('${assignment.id}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h5>Error loading assignments</h5>
-                        <p class="mb-0">${error.message}</p>
-                    </div>
-                `;
-            }
+    const container = document.getElementById('assignmentsContent');
+    if (!container) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('assignments')
+            .select('*')
+            .order('due_date', { ascending: true });
+        
+        if (error) throw error;
+        
+        // Store all assignments for search functionality
+        allAssignments = data || [];
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-tasks"></i>
+                    <h5>No Assignments Yet</h5>
+                    <p>Track your assignments and deadlines here</p>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">
+                        <i class="fas fa-plus me-2"></i>Add Your First Assignment
+                    </button>
+                </div>
+            `;
+            return;
         }
-
+        
+        container.innerHTML = data.map(assignment => `
+            <div class="list-item" data-item-id="${assignment.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="list-item-title">${escapeHtml(assignment.title)}</div>
+                        <div class="list-item-meta">
+                            By <span class="user-link" onclick="viewUserProfile('${assignment.user_id}', '${escapeHtml(getUserNameFromItem(assignment))}')">${escapeHtml(getUserNameFromItem(assignment))}</span> • 
+                            ${escapeHtml(assignment.course)} • Due: ${formatDate(assignment.due_date)}
+                        </div>
+                        
+                        ${assignment.description ? `
+                            <div class="note-description mt-2 p-3 bg-light rounded">
+                                <p class="mb-0">${escapeHtml(assignment.description)}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${assignment.file_url ? `
+                            <div class="file-attachment mt-2">
+                                <i class="fas fa-paperclip me-1"></i>
+                                <span class="file-name">${assignment.file_name || 'Attached file'}</span>
+                                <div class="file-actions">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${assignment.file_url}', '${assignment.file_type}', '${assignment.file_name || 'File'}', 'assignments')">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${assignment.file_url}', '${assignment.file_name || 'download'}')">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="d-flex flex-column">
+                        ${assignment.user_id === currentUser?.id ? `
+                            <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteAssignment('${assignment.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-outline-primary mb-1" onclick="viewUserProfile('${assignment.user_id}', '${escapeHtml(getUserNameFromItem(assignment))}')">
+                                <i class="fas fa-user"></i>
+                            </button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error loading assignments</h5>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+    }
+}
         async function loadPastQuestions() {
-            const container = document.getElementById('pastQuestionsContent');
-            if (!container) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('past_questions')
-                    .select('*')
-                    .order('year', { ascending: false });
-                
-                if (error) throw error;
-                
-                // Store all past questions for search functionality
-                allPastQuestions = data || [];
-                
-                if (!data || data.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-file-alt"></i>
-                            <h5>No Past Questions Yet</h5>
-                            <p>Share past exam questions to help your classmates</p>
-                            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
-                                <i class="fas fa-plus me-2"></i>Add Your First Past Question
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = data.map(pq => `
-                    <div class="list-item" data-item-id="${pq.id}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="list-item-title">${escapeHtml(pq.title)}</div>
-                                <div class="list-item-meta">${escapeHtml(pq.course)} • ${pq.year}</div>
-                                
-                                ${pq.file_url ? `
-                                    <div class="file-attachment mt-2">
-                                        <i class="fas fa-paperclip me-1"></i>
-                                        <span class="file-name">${pq.file_name || 'Attached file'}</span>
-                                        <div class="file-actions">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${pq.file_url}', '${pq.file_type}', '${pq.file_name || 'File'}', 'past-questions')">
-                                                <i class="fas fa-eye me-1"></i>Preview
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${pq.file_url}', '${pq.file_name || 'download'}')">
-                                                <i class="fas fa-download me-1"></i>Download
-                                            </button>
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            <div class="d-flex flex-column">
-                                ${pq.user_id === currentUser?.id ? `
-                                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="deletePastQuestion('${pq.id}')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-                
-            } catch (error) {
-                container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h5>Error loading past questions</h5>
-                        <p class="mb-0">${error.message}</p>
-                    </div>
-                `;
-            }
+    const container = document.getElementById('pastQuestionsContent');
+    if (!container) return;
+    
+    try {
+        const { data, error } = await supabase
+            .from('past_questions')
+            .select('*')
+            .order('year', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Store all past questions for search functionality
+        allPastQuestions = data || [];
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h5>No Past Questions Yet</h5>
+                    <p>Share past exam questions to help your classmates</p>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addPastQuestionModal">
+                        <i class="fas fa-plus me-2"></i>Add Your First Past Question
+                    </button>
+                </div>
+            `;
+            return;
         }
-
+        
+        container.innerHTML = data.map(pq => `
+            <div class="list-item" data-item-id="${pq.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="list-item-title">${escapeHtml(pq.title)}</div>
+                        <div class="list-item-meta">
+                            By <span class="user-link" onclick="viewUserProfile('${pq.user_id}', '${escapeHtml(getUserNameFromItem(pq))}')">${escapeHtml(getUserNameFromItem(pq))}</span> • 
+                            ${escapeHtml(pq.course)} • ${pq.year}
+                        </div>
+                        
+                        ${pq.description ? `
+                            <div class="note-description mt-2 p-3 bg-light rounded">
+                                <p class="mb-0">${escapeHtml(pq.description)}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${pq.file_url ? `
+                            <div class="file-attachment mt-2">
+                                <i class="fas fa-paperclip me-1"></i>
+                                <span class="file-name">${pq.file_name || 'Attached file'}</span>
+                                <div class="file-actions">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${pq.file_url}', '${pq.file_type}', '${pq.file_name || 'File'}', 'past-questions')">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${pq.file_url}', '${pq.file_name || 'download'}')">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="d-flex flex-column">
+                        ${pq.user_id === currentUser?.id ? `
+                            <button class="btn btn-sm btn-outline-danger mb-1" onclick="deletePastQuestion('${pq.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : `
+                            <button class="btn btn-sm btn-outline-primary mb-1" onclick="viewUserProfile('${pq.user_id}', '${escapeHtml(getUserNameFromItem(pq))}')">
+                                <i class="fas fa-user"></i>
+                            </button>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <h5>Error loading past questions</h5>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+    }
+}
         // Save new note with file upload
         async function saveNote() {
             const title = document.getElementById('noteTitle');
             const course = document.getElementById('noteCourse');
+            const description = document.getElementById('noteDescription');
             const noteFilesInput = document.getElementById('noteFiles');
             const saveNoteBtn = document.getElementById('saveNoteBtn');
             const saveNoteBtnText = document.getElementById('saveNoteBtnText');
@@ -4040,14 +4145,15 @@ window.scrollChatToBottom = function() {
                 const fileData = await uploadFileToStorage(file, 'notes', currentUser.id);
                 
                 const noteData = {
-                    title: title.value.trim(),
-                    course: course.value.trim(),
-                    user_id: currentUser.id,
-                    created_at: new Date().toISOString(),
-                    file_url: fileData.url,
-                    file_name: fileData.name,
-                    file_type: fileData.type
-                };
+        title: title.value.trim(),
+        course: course.value.trim(),
+        description: description.value.trim(), // ADD THIS
+        user_id: currentUser.id,
+        created_at: new Date().toISOString(),
+        file_url: fileData.url,
+        file_name: fileData.name,
+        file_type: fileData.type
+    };
                 
                 const { error } = await supabase.from('notes').insert([noteData]);
                 
@@ -4078,6 +4184,7 @@ window.scrollChatToBottom = function() {
         async function saveAssignment() {
             const title = document.getElementById('assignmentTitle');
             const course = document.getElementById('assignmentCourse');
+            const description = document.getElementById('assignmentDescription');
             const dueDate = document.getElementById('assignmentDueDate');
             const assignmentFilesInput = document.getElementById('assignmentFiles');
             const saveAssignmentBtn = document.getElementById('saveAssignmentBtn');
@@ -4114,6 +4221,7 @@ window.scrollChatToBottom = function() {
                 const assignmentData = {
                     title: title.value.trim(),
                     course: course.value.trim(),
+                    description: description.value.trim(),
                     due_date: dueDate.value || null,
                     user_id: currentUser.id,
                     created_at: new Date().toISOString(),
@@ -4151,6 +4259,7 @@ window.scrollChatToBottom = function() {
         async function savePastQuestion() {
             const title = document.getElementById('pastQuestionTitle');
             const course = document.getElementById('pastQuestionCourse');
+            const description = document.getElementById('pastQuestionDescription');
             const year = document.getElementById('pastQuestionYear');
             const pastQuestionFileInput = document.getElementById('pastQuestionFile');
             const savePastQuestionBtn = document.getElementById('savePastQuestionBtn');
@@ -4193,6 +4302,7 @@ window.scrollChatToBottom = function() {
                 const pastQuestionData = {
                     title: title.value.trim(),
                     course: course.value.trim(),
+                    description: description.value.trim(),
                     year: year.value,
                     user_id: currentUser.id,
                     created_at: new Date().toISOString(),
@@ -4374,6 +4484,10 @@ window.scrollChatToBottom = function() {
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+        function getUserNameFromNote(note) {
+    // This would ideally come from a joined query, but for now:
+    return currentUser?.profile?.name || 'User';
+}
 
         // Upload file to Supabase storage
         async function uploadFileToStorage(file, bucketName, folder = '') {
@@ -4831,7 +4945,319 @@ function showInstallPromotion() {
         }, 5000);
     }
 }
+// ==================== MOBILE BACK NAVIGATION SYSTEM ====================
 
+function setupBackNavigation() {
+    console.log('🔙 Setting up back navigation system');
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function(event) {
+        if (event.state && event.state.section) {
+            isBackNavigation = true;
+            switchSection(event.state.section, true);
+        }
+    });
+    
+    // Add back button to mobile header
+    addBackButtonToUI();
+}
+
+function addBackButtonToUI() {
+    // Create back button for mobile
+    const backButton = document.createElement('button');
+    backButton.id = 'mobileBackBtn';
+    backButton.className = 'btn btn-outline-secondary d-md-none mobile-back-btn';
+    backButton.innerHTML = '<i class="fas fa-arrow-left"></i>';
+    backButton.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 15px;
+        z-index: 999;
+        display: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+    `;
+    backButton.onclick = goBack;
+    
+    document.body.appendChild(backButton);
+}
+
+function goBack() {
+    if (navigationHistory.length > 0) {
+        const previousSection = navigationHistory.pop();
+        console.log('↩️ Going back to:', previousSection);
+        isBackNavigation = true;
+        switchSection(previousSection, true);
+    } else {
+        // If no history, go to dashboard
+        console.log('🏠 No history, going to dashboard');
+        navigationHistory = [];
+        switchSection('dashboard');
+    }
+}
+
+function updateBackButtonVisibility() {
+    const backButton = document.getElementById('mobileBackBtn');
+    if (!backButton) return;
+    
+    const isMobile = window.innerWidth < 768;
+    const shouldShow = isMobile && navigationHistory.length > 0;
+    
+    backButton.style.display = shouldShow ? 'flex' : 'none';
+    
+    // Also handle chat back button
+    const chatBackBtn = document.getElementById('chatBackBtn');
+    if (chatBackBtn) {
+        chatBackBtn.style.display = isMobile ? 'block' : 'none';
+    }
+}
+
+// Update on window resize
+window.addEventListener('resize', updateBackButtonVisibility);
+
+        // ==================== USER PROFILE VIEWING SYSTEM ====================
+
+window.viewUserProfile = async function(userId, userName = null) {
+    console.log('👥 Viewing user profile:', userId);
+    
+    try {
+        showProgressOverlay('Loading profile...');
+        
+        // Fetch user data
+        const { data: userData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+        if (error) throw error;
+        
+        currentViewedUser = userData;
+        
+        // Create or show user profile section
+        showUserProfileSection(userData);
+        
+        // Load user's contributions
+        loadUserContributionsView(userId);
+        
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        showNotification('Error loading user profile', 'error');
+        goBack();
+    } finally {
+        hideProgressOverlay();
+    }
+};
+
+function showUserProfileSection(userData) {
+    // Create user profile section if it doesn't exist
+    let userProfileSection = document.getElementById('user-profile');
+    
+    if (!userProfileSection) {
+        userProfileSection = document.createElement('div');
+        userProfileSection.id = 'user-profile';
+        userProfileSection.className = 'section main-section pt-5 pt-md-3 pb-5';
+        userProfileSection.innerHTML = getUserProfileHTML();
+        document.querySelector('.container-fluid').appendChild(userProfileSection);
+    }
+    
+    // Update profile data
+    updateUserProfileView(userData);
+    
+    // Switch to user profile section
+    switchSection('user-profile');
+}
+
+function getUserProfileHTML() {
+    return `
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="profile-picture-container">
+                                <img src="" alt="Profile Picture" class="profile-picture" id="viewedUserPicture">
+                                <div class="user-initials" id="viewedUserInitials"></div>
+                            </div>
+                            <h4 id="viewedUserName">User Name</h4>
+                            <p class="text-muted" id="viewedUserLevel">Level</p>
+                            <p class="text-muted" id="viewedUserDepartment">Department</p>
+                            <p class="text-muted" id="viewedUserEmail">Email</p>
+                            
+                            <!-- Message Button -->
+                            <button class="btn btn-primary mt-3" id="messageUserBtn">
+                                <i class="fas fa-comment me-2"></i>Message
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Contributions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <h3 id="viewedUserNotesCount">0</h3>
+                                    <p class="text-muted">Notes</p>
+                                </div>
+                                <div class="col-4">
+                                    <h3 id="viewedUserAssignmentsCount">0</h3>
+                                    <p class="text-muted">Assignments</p>
+                                </div>
+                                <div class="col-4">
+                                    <h3 id="viewedUserPastQuestionsCount">0</h3>
+                                    <p class="text-muted">Past Questions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User's Recent Notes -->
+                    <div class="card mt-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Notes</h5>
+                            <a href="#" onclick="viewAllUserItems('notes')" class="btn btn-sm btn-primary">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <div id="viewedUserNotesContent">
+                                <div class="loading-spinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateUserProfileView(userData) {
+    // Update basic info
+    document.getElementById('viewedUserName').textContent = userData.name;
+    document.getElementById('viewedUserLevel').textContent = userData.level;
+    document.getElementById('viewedUserDepartment').textContent = userData.department;
+    document.getElementById('viewedUserEmail').textContent = userData.email;
+    
+    // Update profile picture
+    const profilePicture = document.getElementById('viewedUserPicture');
+    const userInitials = document.getElementById('viewedUserInitials');
+    
+    if (userData.profile_picture) {
+        profilePicture.src = userData.profile_picture;
+        profilePicture.style.display = 'block';
+        userInitials.style.display = 'none';
+    } else {
+        profilePicture.style.display = 'none';
+        userInitials.style.display = 'flex';
+        userInitials.textContent = getInitials(userData.name);
+        userInitials.style.backgroundColor = getColorFromName(userData.name);
+    }
+    
+    // Setup message button
+    const messageBtn = document.getElementById('messageUserBtn');
+    if (messageBtn) {
+        messageBtn.onclick = () => messageUser(userData.id, userData.name);
+    }
+}
+
+async function loadUserContributionsView(userId) {
+    try {
+        // Get counts
+        const [notesCount, assignmentsCount, pastQuestionsCount] = await Promise.all([
+            supabase.from('notes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            supabase.from('assignments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            supabase.from('past_questions').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+        ]);
+        
+        // Update counts
+        document.getElementById('viewedUserNotesCount').textContent = notesCount.count || 0;
+        document.getElementById('viewedUserAssignmentsCount').textContent = assignmentsCount.count || 0;
+        document.getElementById('viewedUserPastQuestionsCount').textContent = pastQuestionsCount.count || 0;
+        
+        // Load recent notes
+        loadUserRecentNotes(userId);
+        
+    } catch (error) {
+        console.error('Error loading user contributions:', error);
+    }
+}
+
+async function loadUserRecentNotes(userId) {
+    try {
+        const { data: notes, error } = await supabase
+            .from('notes')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(5);
+            
+        if (error) throw error;
+        
+        const container = document.getElementById('viewedUserNotesContent');
+        if (!container) return;
+        
+        if (!notes || notes.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No notes shared yet</p>';
+            return;
+        }
+        
+        container.innerHTML = notes.map(note => `
+            <div class="list-item">
+                <div class="list-item-title">${escapeHtml(note.title)}</div>
+                <div class="list-item-meta">${escapeHtml(note.course)} • ${formatDate(note.created_at)}</div>
+                ${note.description ? `<p class="mt-2">${escapeHtml(note.description)}</p>` : ''}
+                <div class="list-item-actions mt-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="previewFile('${note.file_url}', '${note.file_type}', '${note.file_name || 'File'}', 'notes')">
+                        <i class="fas fa-eye me-1"></i>Preview
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="downloadFile('${note.file_url}', '${note.file_name || 'download'}')">
+                        <i class="fas fa-download me-1"></i>Download
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error loading user notes:', error);
+        document.getElementById('viewedUserNotesContent').innerHTML = '<p class="text-danger">Error loading notes</p>';
+    }
+}
+
+function messageUser(userId, userName) {
+    console.log('💬 Messaging user:', userName);
+    
+    // Set current chat user
+    currentChatUser = {
+        id: userId,
+        name: userName,
+        level: currentViewedUser?.level || '',
+        department: currentViewedUser?.department || ''
+    };
+    
+    // Switch to chat section
+    switchSection('chat');
+    
+    // Select the user in chat
+    setTimeout(() => {
+        selectChatUser(userId, userName, currentViewedUser?.level || '', currentViewedUser?.department || '');
+    }, 500);
+}
+
+window.viewAllUserItems = function(type) {
+    if (!currentViewedUser) return;
+    
+    switch (type) {
+        case 'notes':
+            showNotification(`Showing all ${currentViewedUser.name}'s notes`, 'info');
+            break;
+    }
+};
 // Install PWA
 async function installPWA() {
     if (!deferredPrompt) {
@@ -4997,6 +5423,7 @@ window.previewLocalFile = function(button) {
         });
     }
 };
+        
 
 // Enhanced remove file function
 window.removeFile = function(element, inputId) {

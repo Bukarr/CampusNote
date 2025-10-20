@@ -1576,6 +1576,57 @@ button:focus, a:focus {
         height: calc(100vh - 130px);
     }
 }
+.user-unread-badge {
+    font-size: 0.6rem;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-item {
+    position: relative;
+}
+
+.unread-badge {
+    font-size: 0.6rem;
+    padding: 0.25em 0.4em;
+
+/* Fix dropdown positioning */
+.dropdown-menu {
+    z-index: 1060 !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure dropdown toggle is clickable */
+.dropdown-toggle {
+    cursor: pointer !important;
+}
+
+/* Fix for mobile devices */
+@media (max-width: 768px) {
+    .dropdown-menu {
+        position: fixed !important;
+        top: auto !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: calc(100% - 20px) !important;
+    }
+}
+
+/* Prevent black screen issues */
+.chat-messages {
+    background-color: white !important;
+}
+
+.message-content {
+    background-color: transparent !important;
+}}
     </style>
 </head>
 <body>
@@ -2245,8 +2296,6 @@ button:focus, a:focus {
         </div>
     </div>
 
-    <!-- JavaScript for mobile app functionality -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Mobile app navigation
         document.addEventListener('DOMContentLoaded', function() {
@@ -2337,6 +2386,8 @@ let currentPreviewFile = null;
 let navigationHistory = [];
 let isBackNavigation = false;
 let userProfilesCache = new Map();
+let authRequestCount = 0;
+const MAX_AUTH_REQUESTS = 5;
 
 // Enhanced chat variables
 let unreadMessagesCount = 0;
@@ -2509,8 +2560,65 @@ function initializeApp() {
     console.log('🔧 Initializing enhanced real-time app');
 }
 
+// ==================== ENHANCED USER DROPDOWN INITIALIZATION ====================
 
-
+function initializeUserDropdown() {
+    console.log('🔧 Initializing user dropdown...');
+    
+    const userMenu = document.getElementById('userMenu');
+    const dropdownToggle = document.querySelector('#userMenu .dropdown-toggle');
+    
+    if (!userMenu || !dropdownToggle) {
+        console.error('❌ User dropdown elements not found');
+        return;
+    }
+    
+    try {
+        // Remove any existing event listeners first
+        dropdownToggle.replaceWith(dropdownToggle.cloneNode(true));
+        
+        // Get fresh reference after clone
+        const freshToggle = document.querySelector('#userMenu .dropdown-toggle');
+        
+        // Initialize Bootstrap dropdown properly
+        const dropdown = new bootstrap.Dropdown(freshToggle, {
+            autoClose: true,
+            boundary: 'viewport'
+        });
+        
+        console.log('✅ Bootstrap dropdown initialized');
+        
+        // Simple click handler
+        freshToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropdown.toggle();
+        });
+        
+        // Handle dropdown item clicks
+        userMenu.addEventListener('click', function(e) {
+            if (e.target.closest('[data-section="profile"]')) {
+                e.preventDefault();
+                dropdown.hide();
+                switchSection('profile');
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!userMenu.contains(e.target)) {
+                dropdown.hide();
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error initializing dropdown:', error);
+        
+        // Fallback: Use data attributes for Bootstrap
+        dropdownToggle.setAttribute('data-bs-toggle', 'dropdown');
+        dropdownToggle.setAttribute('data-bs-auto-close', 'true');
+    }
+}
 
 // ==================== SEARCH FUNCTIONALITY ====================
 function setupSearchFunctionality() {
@@ -2744,13 +2852,20 @@ function switchSection(sectionId, fromBackNavigation = false) {
     // Handle chat-specific UI
     handleChatSectionUI(sectionId);
     
-    // Load section data
+    // Load section data - IMPORTANT: Always reload chat when switching to it
     const sectionHandlers = {
         'dashboard': () => { loadDashboardData(); },
         'notes': () => { loadNotes(); },
         'assignments': () => { loadAssignments(); },
         'past-questions': () => { loadPastQuestions(); },
-        'chat': () => { loadChatUsers(); },
+        'chat': () => { 
+            loadChatUsers(); 
+            // Always reload chat history if we have an active chat user
+            if (currentChatUser) {
+                console.log('💬 Reloading chat history for:', currentChatUser.name);
+                loadChatHistory(currentChatUser.id);
+            }
+        },
         'profile': () => { loadUserProfile(); loadUserContributions(); loadContributionBadges(); },
         'user-profile': () => { },
         'community': () => { loadCommunityUsers(); }
@@ -2799,7 +2914,11 @@ async function checkAuthState() {
     console.log('🔐 Checking authentication state');
     try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+        authRequestCount++;
+    if (authRequestCount > MAX_AUTH_REQUESTS) {
+        console.log('🚫 Too many auth requests, stopping...');
+        return;
+    }
         if (error) {
             console.error('❌ Session error:', error);
             showUnauthenticatedUI();
@@ -3752,12 +3871,17 @@ function handleNewMessageRealtime(message) {
         displayedMessageIds.add(message.id);
         displayMessageImmediately(message);
         scrollChatToBottom();
-        markMessageAsRead(message.id);
+        // REMOVE THIS LINE: markMessageAsRead(message.id);
     }
     
     // Handle notifications for new messages
     if (message.sender_id !== currentUser.id) {
         handleNewMessageNotification(message);
+    }
+    
+    // Update chat list to show unread messages on top
+    if (message.sender_id !== currentUser.id) {
+        updateChatListOrder();
     }
 }
 
@@ -3868,18 +3992,7 @@ function updateUserListBadges() {
     });
 }
 
-async function markMessageAsRead(messageId) {
-    try {
-        const { error } = await supabase
-            .from('messages')
-            .update({ read: true })
-            .eq('id', messageId);
-        
-        if (error) throw error;
-    } catch (error) {
-        console.error('Error marking message as read:', error);
-    }
-}
+
 
 function clearUserNotifications(userId) {
     if (messageNotifications.has(userId)) {
@@ -3887,6 +4000,8 @@ function clearUserNotifications(userId) {
         unreadMessagesCount -= count;
         messageNotifications.delete(userId);
         updateUnreadBadges();
+        updateChatListOrder();
+
     }
 }
 
@@ -3916,7 +4031,19 @@ async function loadChatUsers() {
             return;
         }
         
-        container.innerHTML = data.map(user => {
+        // NEW: Sort users - unread messages first, then by name
+        const sortedUsers = data.sort((a, b) => {
+            const aUnread = messageNotifications.get(a.id) || 0;
+            const bUnread = messageNotifications.get(b.id) || 0;
+            
+            if (aUnread > 0 && bUnread === 0) return -1;
+            if (bUnread > 0 && aUnread === 0) return 1;
+            if (aUnread > 0 && bUnread > 0) return bUnread - aUnread;
+            
+            return a.name.localeCompare(b.name);
+        });
+        
+        container.innerHTML = sortedUsers.map(user => {
             const initials = getInitials(user.name);
             const hasProfilePicture = user.profile_picture && user.profile_picture.trim() !== '';
             const unreadCount = messageNotifications.get(user.id) || 0;
@@ -3949,7 +4076,13 @@ async function loadChatUsers() {
         container.innerHTML = '<div class="text-danger p-3">Error loading users</div>';
     }
 }
-
+function updateChatListOrder() {
+    const container = document.getElementById('chatUserList');
+    if (!container) return;
+    
+    // Re-sort and update the chat list
+    loadChatUsers();
+}
 window.selectChatUser = function(userId, userName, userLevel, userDepartment, element) {
     console.log('💬 SELECTING CHAT USER:', userName);
     
@@ -3998,6 +4131,7 @@ window.selectChatUser = function(userId, userName, userLevel, userDepartment, el
     if (messageInput) {
         messageInput.disabled = false;
         messageInput.placeholder = `Message ${userName}...`;
+        messageInput.value = ''; // Clear input
     }
     
     if (sendMessageBtn) sendMessageBtn.disabled = false;
@@ -4022,6 +4156,7 @@ window.selectChatUser = function(userId, userName, userLevel, userDepartment, el
         if (chatSidebar) chatSidebar.style.display = 'none';
     }
     
+    // Always load chat history when selecting a user
     loadChatHistory(userId);
     
     setTimeout(() => {
@@ -4030,6 +4165,8 @@ window.selectChatUser = function(userId, userName, userLevel, userDepartment, el
 };
 
 window.showChatUserList = function() {
+    console.log('📱 Showing chat user list (mobile)');
+    
     const chatMain = document.getElementById('chatMain');
     const chatSidebar = document.querySelector('.chat-sidebar');
     
@@ -4038,7 +4175,31 @@ window.showChatUserList = function() {
     
     // Update navigation history
     navigationHistory.push('chat');
-}
+    
+    // Reset current chat user for mobile view
+    if (window.innerWidth <= 768) {
+        currentChatUser = null;
+        
+        // Reset chat input
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const voiceNoteBtn = document.getElementById('voiceNoteBtn');
+        
+        if (messageInput) {
+            messageInput.disabled = true;
+            messageInput.placeholder = 'Select a user to chat with...';
+            messageInput.value = '';
+        }
+        
+        if (sendMessageBtn) sendMessageBtn.disabled = true;
+        if (voiceNoteBtn) voiceNoteBtn.disabled = true;
+        
+        // Clear active state from user list
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+    }
+};
 
 // ==================== WHATSAPP-STYLE MESSAGE DISPLAY ====================
 window.loadChatHistory = async function(userId) {
@@ -4051,14 +4212,17 @@ window.loadChatHistory = async function(userId) {
     }
     
     try {
-        container.innerHTML = `
-            <div class="text-center p-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading messages...</span>
+        // Show loading state only if container is empty
+        if (container.children.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading messages...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading messages...</p>
                 </div>
-                <p class="mt-2 text-muted">Loading messages...</p>
-            </div>
-        `;
+            `;
+        }
         
         const { data, error } = await supabase
             .from('messages')
@@ -4068,6 +4232,7 @@ window.loadChatHistory = async function(userId) {
         
         if (error) throw error;
         
+        // Clear container and reset displayed messages
         container.innerHTML = '';
         displayedMessageIds.clear();
         
@@ -4102,13 +4267,6 @@ window.loadChatHistory = async function(userId) {
         });
         
         scrollChatToBottom();
-        
-        // Mark all messages as read
-        data.forEach(message => {
-            if (message.sender_id !== currentUser.id && !message.read) {
-                markMessageAsRead(message.id);
-            }
-        });
         
     } catch (error) {
         console.error('❌ Load history error:', error);
@@ -4165,8 +4323,7 @@ function createTextMessage(message, isSent, messageTime) {
                 <span class="message-time">${messageTime}</span>
                 ${isSent ? `
                     <span class="message-status">
-                        ${message.read ? '<i class="fas fa-check-double text-info"></i>' : 
-                          '<i class="fas fa-check text-muted"></i>'}
+                        <i class="fas fa-check text-muted"></i>
                     </span>
                 ` : ''}
             </div>
@@ -4196,15 +4353,13 @@ function createVoiceNoteMessage(message, isSent, messageTime) {
                 <span class="message-time">${messageTime}</span>
                 ${isSent ? `
                     <span class="message-status">
-                        ${message.read ? '<i class="fas fa-check-double text-info"></i>' : 
-                          '<i class="fas fa-check text-muted"></i>'}
+                        <i class="fas fa-check text-muted"></i>
                     </span>
                 ` : ''}
             </div>
         </div>
     `;
 }
-
 function formatMessageDate(dateString) {
     try {
         const date = new Date(dateString);
@@ -5986,6 +6141,7 @@ async function startVoiceNoteRecording() {
         const modal = new bootstrap.Modal(document.getElementById('voiceNoteModal'));
         modal.show();
         
+        // Start the recording timer
         startRecordingTimer();
         updateRecordingUI(true);
         
@@ -5994,6 +6150,21 @@ async function startVoiceNoteRecording() {
         alert('Error accessing microphone: ' + error.message);
         stopVoiceNoteRecording();
     }
+}
+
+function startRecordingTimer() {
+    const timerElement = document.getElementById('recordingTimer');
+    if (!timerElement) return;
+    
+    recordingTimer = setInterval(() => {
+        const elapsed = Date.now() - recordingStartTime;
+        timerElement.textContent = formatDuration(elapsed);
+        
+        // Auto-stop after 2 minutes (120 seconds)
+        if (elapsed >= 120000) {
+            stopVoiceNoteRecording();
+        }
+    }, 1000);
 }
 
 function stopVoiceNoteRecording() {
@@ -6021,6 +6192,7 @@ function stopVoiceNoteRecording() {
 async function handleRecordingStop() {
     const recordingDuration = Date.now() - recordingStartTime;
     
+    // Validate recording
     if (recordingDuration > 120000) {
         alert('Voice note cannot be longer than 2 minutes');
         return;
@@ -6051,93 +6223,6 @@ async function handleRecordingStop() {
     }
 }
 
-async function uploadAndSendVoiceNote(audioBlob, duration) {
-    try {
-        showProgressOverlay('Sending voice note...');
-        
-        const fileName = `voice-notes/${currentUser.id}/${Date.now()}.webm`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('notes')
-            .upload(fileName, audioBlob);
-            
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-            .from('notes')
-            .getPublicUrl(fileName);
-        
-        const durationFormatted = formatDuration(duration);
-        
-        const tempVoiceNote = {
-            id: 'temp-voice-' + Date.now(),
-            content: publicUrl,
-            sender_id: currentUser.id,
-            receiver_id: currentChatUser.id,
-            message_type: 'voice_note',
-            duration: durationFormatted,
-            created_at: new Date().toISOString(),
-            isTemp: true,
-            read: false
-        };
-        
-        displayMessageImmediately(tempVoiceNote);
-        scrollChatToBottom();
-        
-        const messageData = {
-            content: publicUrl,
-            sender_id: currentUser.id,
-            receiver_id: currentChatUser.id,
-            message_type: 'voice_note',
-            duration: durationFormatted,
-            created_at: new Date().toISOString(),
-            read: false
-        };
-        
-        const { data, error } = await supabase
-            .from('messages')
-            .insert([messageData])
-            .select();
-            
-        if (error) throw error;
-        
-        console.log('✅ Voice note sent successfully');
-        showNotification('Voice note sent!');
-        
-        // Replace temporary message with real one
-        const tempElement = document.querySelector(`[data-message-id="temp-voice-${tempVoiceNote.id.split('-')[2]}"]`);
-        if (tempElement) {
-            tempElement.remove();
-        }
-        
-        displayedMessageIds.add(data[0].id);
-        
-    } catch (error) {
-        console.error('Error sending voice note:', error);
-        
-        const tempMessages = document.querySelectorAll('[data-message-id^="temp-voice-"]');
-        const lastTempMessage = tempMessages[tempMessages.length - 1];
-        if (lastTempMessage) lastTempMessage.remove();
-        
-        alert('Error sending voice note: ' + error.message);
-    } finally {
-        hideProgressOverlay();
-    }
-}
-
-function startRecordingTimer() {
-    const timerElement = document.getElementById('recordingTimer');
-    if (!timerElement) return;
-    
-    recordingTimer = setInterval(() => {
-        const elapsed = Date.now() - recordingStartTime;
-        timerElement.textContent = formatDuration(elapsed);
-        
-        if (elapsed >= 120000) {
-            stopVoiceNoteRecording();
-        }
-    }, 1000);
-}
-
 function updateRecordingUI(recording) {
     const timerElement = document.getElementById('recordingTimer');
     const stopButton = document.getElementById('stopRecordingBtn');
@@ -6162,6 +6247,118 @@ function formatDuration(milliseconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+async function uploadAndSendVoiceNote(audioBlob, duration) {
+    try {
+        showProgressOverlay('Sending voice note...');
+        
+        const fileName = `voice-notes/${currentUser.id}/${Date.now()}.webm`;
+        
+        // Upload the audio file to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('notes')
+            .upload(fileName, audioBlob);
+            
+        if (uploadError) {
+            console.error('❌ Storage upload error:', uploadError);
+            
+            // Check if it's an RLS error and provide better feedback
+            if (uploadError.message.includes('row-level security policy')) {
+                throw new Error('Storage permission denied. Please try again.');
+            }
+            throw uploadError;
+        }
+        
+        // Get public URL for the uploaded file
+        const { data: { publicUrl } } = supabase.storage
+            .from('notes')
+            .getPublicUrl(fileName);
+        
+        const durationFormatted = formatDuration(duration);
+        
+        // Create temporary voice note with optimistic UI
+        const tempMessageId = 'temp-voice-' + Date.now();
+        const tempMessage = {
+            id: tempMessageId,
+            content: publicUrl,
+            sender_id: currentUser.id,
+            receiver_id: currentChatUser.id,
+            message_type: 'voice_note',
+            duration: durationFormatted,
+            created_at: new Date().toISOString(),
+            isTemp: true
+        };
+        
+        console.log('🎤 Displaying temporary voice note...');
+        
+        // Immediately display the message
+        displayMessageImmediately(tempMessage);
+        scrollChatToBottom();
+        
+        // Prepare message data for database
+        const messageData = {
+            content: publicUrl,
+            sender_id: currentUser.id,
+            receiver_id: currentChatUser.id,
+            message_type: 'voice_note',
+            duration: durationFormatted,
+            created_at: new Date().toISOString()
+        };
+        
+        console.log('🎤 Voice note data:', messageData);
+        
+        // Send to database
+        const { data, error } = await supabase
+            .from('messages')
+            .insert([messageData])
+            .select();
+            
+        if (error) {
+            console.error('❌ Voice note database error:', error);
+            
+            // Show error but keep temporary message
+            showNotification('Voice note sent locally (offline)', 'info');
+            
+            // Don't remove the temporary message - keep it visible
+            return;
+        }
+        
+        console.log('✅ Voice note sent successfully:', data[0].id);
+        
+        // Replace temporary message with real one
+        setTimeout(() => {
+            const tempElement = document.querySelector(`[data-message-id="${tempMessageId}"]`);
+            if (tempElement) {
+                tempElement.remove();
+                
+                // Display the real message
+                if (data && data[0]) {
+                    displayedMessageIds.add(data[0].id);
+                    displayMessageImmediately(data[0]);
+                    scrollChatToBottom();
+                }
+            }
+        }, 100);
+        
+        showNotification('Voice note sent!');
+        
+    } catch (error) {
+        console.error('❌ Error sending voice note:', error);
+        
+        // Show error notification but don't break the UI
+        showNotification('Failed to send voice note: ' + error.message, 'error');
+        
+        // Ensure chat remains visible by reloading chat history
+        if (currentChatUser) {
+            setTimeout(() => {
+                loadChatHistory(currentChatUser.id);
+            }, 1000);
+        }
+        
+    } finally {
+        hideProgressOverlay();
+    }
 }
 
 window.playVoiceNote = function(audioUrl, button) {
@@ -6200,7 +6397,6 @@ window.playVoiceNote = function(audioUrl, button) {
         }
     };
 };
-
 // ==================== PWA FUNCTIONS ====================
 function initializePWA() {
     console.log('📱 Initializing PWA features');

@@ -1935,6 +1935,9 @@ button:focus, a:focus {
                     <!-- Chat Main Area -->
                     <div class="chat-main" id="chatMain">
                         <div class="chat-header">
+                            <button id="chatBackBtn" class="btn btn-sm btn-outline-secondary me-2 d-md-none">
+            <i class="fas fa-arrow-left"></i>
+        </button>
                             <div class="chat-avatar" id="chatHeaderAvatar">
                                 <!-- Avatar will be inserted here -->
                             </div>
@@ -2551,6 +2554,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFileUploadHandlers();
     setupSearchFunctionality();
     setupBackNavigation();
+    setupChatBackNavigation();
     initializePWA();
     setupNetworkDetection();
     initializeVoiceNote();
@@ -2849,10 +2853,15 @@ function switchSection(sectionId, fromBackNavigation = false) {
     // Update UI states
     updateBottomNavForSection(sectionId);
     
-    // Handle chat-specific UI
-    handleChatSectionUI(sectionId);
+    // Handle chat-specific UI - FIXED: Always reset to user list when switching to chat section
+    if (sectionId === 'chat') {
+        handleChatSectionActivation();
+    } else {
+        // When leaving chat section, preserve chat state but reset UI
+        handleChatSectionDeactivation();
+    }
     
-    // Load section data - IMPORTANT: Always reload chat when switching to it
+    // Load section data
     const sectionHandlers = {
         'dashboard': () => { loadDashboardData(); },
         'notes': () => { loadNotes(); },
@@ -2860,8 +2869,8 @@ function switchSection(sectionId, fromBackNavigation = false) {
         'past-questions': () => { loadPastQuestions(); },
         'chat': () => { 
             loadChatUsers(); 
-            // Always reload chat history if we have an active chat user
-            if (currentChatUser) {
+            // Only reload chat history if we're already in a chat and it's visible
+            if (currentChatUser && isChatDialogueVisible()) {
                 console.log('💬 Reloading chat history for:', currentChatUser.name);
                 loadChatHistory(currentChatUser.id);
             }
@@ -2876,6 +2885,58 @@ function switchSection(sectionId, fromBackNavigation = false) {
     }
     
     console.log('✅ Switched to section:', sectionId);
+}
+
+function handleChatSectionActivation() {
+    console.log('💬 Activating chat section');
+    const chatMain = document.getElementById('chatMain');
+    const chatSidebar = document.querySelector('.chat-sidebar');
+    
+    // Always start with user list when switching to chat section
+    if (chatMain) chatMain.classList.remove('active');
+    if (chatSidebar) chatSidebar.style.display = 'flex';
+    
+    // Reset chat input if no active user
+    if (!currentChatUser) {
+        resetChatInput();
+    }
+}
+
+function handleChatSectionDeactivation() {
+    console.log('💬 Deactivating chat section');
+    // Preserve chat state but ensure proper UI when returning
+    const chatMain = document.getElementById('chatMain');
+    if (chatMain) {
+        // Don't remove active class - preserve the state
+        // The state will be handled when we reactivate the chat section
+    }
+}
+
+function isChatDialogueVisible() {
+    const chatMain = document.getElementById('chatMain');
+    return chatMain && chatMain.classList.contains('active');
+}
+
+function resetChatInput() {
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    const voiceNoteBtn = document.getElementById('voiceNoteBtn');
+    
+    if (messageInput) {
+        messageInput.disabled = true;
+        messageInput.placeholder = 'Select a user to chat with...';
+        messageInput.value = '';
+        autoResizeTextarea();
+    }
+    
+    if (sendMessageBtn) sendMessageBtn.disabled = true;
+    if (voiceNoteBtn) voiceNoteBtn.disabled = true;
+}
+
+function updateChatUserListActiveState() {
+    document.querySelectorAll('.chat-item').forEach(item => {
+        item.classList.remove('active');
+    });
 }
 
 function handleChatSectionUI(sectionId) {
@@ -3654,6 +3715,72 @@ function setupRealtimeSubscriptions() {
     setupPastQuestionsSubscription();
 }
 
+// ==================== ENHANCED CHAT BACK NAVIGATION ====================
+function setupChatBackNavigation() {
+    console.log('🔙 Setting up chat back navigation');
+    
+    // Handle browser back button
+    window.addEventListener('popstate', function(event) {
+        console.log('📚 Browser navigation:', event.state);
+        
+        // Check if we're in chat and need to close the dialogue
+        const chatMain = document.getElementById('chatMain');
+        if (chatMain && chatMain.classList.contains('active')) {
+            console.log('💬 Closing chat dialogue via back navigation');
+            showChatUserList();
+            // Prevent further back navigation if we're just closing the chat
+            if (navigationHistory.length > 0 && navigationHistory[navigationHistory.length - 1] === 'chat') {
+                return;
+            }
+        }
+        
+        if (navigationHistory.length > 0) {
+            isBackNavigation = true;
+            const previousSection = navigationHistory.pop();
+            console.log('↩️ Going back to:', previousSection);
+            switchSection(previousSection, true);
+        }
+    });
+    
+    // Add back button event listener to chat header
+    const chatBackBtn = document.getElementById('chatBackBtn');
+    if (chatBackBtn) {
+        chatBackBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔙 Chat back button clicked');
+            handleChatBackNavigation();
+        });
+    }
+}
+
+function handleChatBackNavigation() {
+    console.log('💬 Handling chat back navigation');
+    
+    const chatMain = document.getElementById('chatMain');
+    const chatSidebar = document.querySelector('.chat-sidebar');
+    
+    if (window.innerWidth <= 768 && chatMain && chatMain.classList.contains('active')) {
+        // Mobile: Close chat dialogue and show user list
+        console.log('📱 Mobile: Closing chat dialogue');
+        showChatUserList();
+    } else {
+        // Desktop: Go back to previous section or user list
+        console.log('🖥️ Desktop: Navigating back from chat');
+        if (navigationHistory.length > 0) {
+            isBackNavigation = true;
+            const previousSection = navigationHistory.pop();
+            switchSection(previousSection, true);
+        } else {
+            // Fallback: Show user list
+            currentChatUser = null;
+            resetChatInput();
+            updateChatUserListActiveState();
+        }
+    }
+}
+
+
 function setupChatSubscription() {
     if (!currentUser) {
         console.log('❌ No user for chat subscription');
@@ -4103,7 +4230,45 @@ window.selectChatUser = function(userId, userName, userLevel, userDepartment, el
     // Clear notifications for this user
     clearUserNotifications(userId);
     
-    // Update chat header
+    // Update chat header and UI
+    updateChatHeader(userName, userLevel, userDepartment, userId);
+    
+    // Update active state in user list
+    document.querySelectorAll('.chat-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    if (element) {
+        element.classList.add('active');
+        element.setAttribute('data-user-id', userId);
+    }
+    
+    // Mobile responsive behavior with proper history
+    const chatMain = document.getElementById('chatMain');
+    const chatSidebar = document.querySelector('.chat-sidebar');
+    
+    if (window.innerWidth <= 768) {
+        if (chatMain) chatMain.classList.add('active');
+        if (chatSidebar) chatSidebar.style.display = 'none';
+        
+        // Push state for chat dialogue
+        window.history.pushState({ 
+            section: 'chat', 
+            view: 'chat-dialogue', 
+            userId: userId 
+        }, '', `#chat-${userId}`);
+    }
+    
+    // Always load chat history when selecting a user
+    loadChatHistory(userId);
+    
+    setTimeout(() => {
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) messageInput.focus();
+    }, 100);
+};
+
+function updateChatHeader(userName, userLevel, userDepartment, userId) {
     const chatHeaderName = document.getElementById('chatHeaderName');
     const chatHeaderStatus = document.getElementById('chatHeaderStatus');
     const chatHeaderAvatar = document.getElementById('chatHeaderAvatar');
@@ -4132,37 +4297,12 @@ window.selectChatUser = function(userId, userName, userLevel, userDepartment, el
         messageInput.disabled = false;
         messageInput.placeholder = `Message ${userName}...`;
         messageInput.value = ''; // Clear input
+        autoResizeTextarea();
     }
     
     if (sendMessageBtn) sendMessageBtn.disabled = false;
     if (voiceNoteBtn) voiceNoteBtn.disabled = false;
-    
-    // Update active state in user list
-    document.querySelectorAll('.chat-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    if (element) {
-        element.classList.add('active');
-        element.setAttribute('data-user-id', userId);
-    }
-    
-    // Mobile responsive behavior
-    const chatMain = document.getElementById('chatMain');
-    const chatSidebar = document.querySelector('.chat-sidebar');
-    
-    if (window.innerWidth <= 768) {
-        if (chatMain) chatMain.classList.add('active');
-        if (chatSidebar) chatSidebar.style.display = 'none';
-    }
-    
-    // Always load chat history when selecting a user
-    loadChatHistory(userId);
-    
-    setTimeout(() => {
-        if (messageInput) messageInput.focus();
-    }, 100);
-};
+}
 
 window.showChatUserList = function() {
     console.log('📱 Showing chat user list (mobile)');
@@ -4173,31 +4313,17 @@ window.showChatUserList = function() {
     if (chatMain) chatMain.classList.remove('active');
     if (chatSidebar) chatSidebar.style.display = 'flex';
     
-    // Update navigation history
-    navigationHistory.push('chat');
+    // Update navigation history - push state for user list
+    if (navigationHistory.length === 0 || navigationHistory[navigationHistory.length - 1] !== 'chat') {
+        navigationHistory.push('chat');
+        window.history.pushState({ section: 'chat', view: 'user-list' }, '', '#chat');
+    }
     
     // Reset current chat user for mobile view
     if (window.innerWidth <= 768) {
         currentChatUser = null;
-        
-        // Reset chat input
-        const messageInput = document.getElementById('messageInput');
-        const sendMessageBtn = document.getElementById('sendMessageBtn');
-        const voiceNoteBtn = document.getElementById('voiceNoteBtn');
-        
-        if (messageInput) {
-            messageInput.disabled = true;
-            messageInput.placeholder = 'Select a user to chat with...';
-            messageInput.value = '';
-        }
-        
-        if (sendMessageBtn) sendMessageBtn.disabled = true;
-        if (voiceNoteBtn) voiceNoteBtn.disabled = true;
-        
-        // Clear active state from user list
-        document.querySelectorAll('.chat-item').forEach(item => {
-            item.classList.remove('active');
-        });
+        resetChatInput();
+        updateChatUserListActiveState();
     }
 };
 
